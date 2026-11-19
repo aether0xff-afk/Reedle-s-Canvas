@@ -1,0 +1,42 @@
+name: iPad app build
+
+on:
+  push:
+    branches: [main, aet-34-canvas-contracts]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'jsonschema>=4.21,<5'
+      - run: python tools/validate_contracts.py
+
+  ios-build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build for iPad Simulator
+        run: |
+          xcodebuild -version
+          xcodebuild \
+            -project ReedlesCanvas.xcodeproj \
+            -scheme ReedlesCanvas \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            build

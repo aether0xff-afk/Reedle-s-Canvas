@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "requestId": "ca31bca4-3b2c-4709-b1ca-24c92af7443a",
+  "noteId": "0bc75c4b-c255-4ff3-b7f5-10035a31c727",
+  "observedRevision": 7,
+  "decision": "act",
+  "actions": [
+    {
+      "actionId": "46f0a4de-5111-4c0a-8955-42f5282e26b7",
+      "type": "annotate",
+      "targetEntityId": "1ff7397e-35a3-40b3-a716-53c1a2a9256c",
+      "placementIntent": "on_target",
+      "content": "마지막 값 다시 확인"
+    },
+    {
+      "actionId": "caf213b9-4adf-4445-8439-28f8e2b0c28f",
+      "type": "ask_question",
+      "targetEntityId": "1ff7397e-35a3-40b3-a716-53c1a2a9256c",
+      "placementIntent": "near_right",
+      "content": "2+2를 다시 계산해 볼래?"
+    }
+  ]
+}
