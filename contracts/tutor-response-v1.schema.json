@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/reedle/contracts/tutor-response-v1.schema.json",
+  "title": "Reedle tutor response v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestId", "noteId", "observedRevision", "decision", "actions"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "requestId": { "$ref": "#/$defs/uuid" },
+    "noteId": { "$ref": "#/$defs/uuid" },
+    "observedRevision": { "type": "integer", "minimum": 0 },
+    "decision": { "enum": ["observe_only", "act"] },
+    "actions": { "type": "array", "maxItems": 4, "items": { "$ref": "#/$defs/action" } }
+  },
+  "allOf": [
+    { "if": { "properties": { "decision": { "const": "observe_only" } } }, "then": { "properties": { "actions": { "maxItems": 0 } } } },
+    { "if": { "properties": { "decision": { "const": "act" } } }, "then": { "properties": { "actions": { "minItems": 1 } } } }
+  ],
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "action": {
+      "type": "object", "additionalProperties": false,
+      "required": ["actionId", "type", "targetEntityId", "placementIntent", "content"],
+      "properties": {
+        "actionId": { "$ref": "#/$defs/uuid" },
+        "type": { "enum": ["annotate", "write", "draw", "ask_question"] },
+        "targetEntityId": { "$ref": "#/$defs/uuid" },
+        "placementIntent": { "enum": ["near_right", "near_left", "above", "below", "on_target"] },
+        "content": { "type": "string", "minLength": 1, "maxLength": 2000 }
+      }
+    }
+  }
+}
