@@ -8,6 +8,9 @@ targets:
     platform: iOS
     sources:
       - path: ReedlesCanvas
+    scheme:
+      testTargets:
+        - ReedlesCanvasTests
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.aether.reedlescanvas
@@ -18,3 +21,16 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIRequiresFullScreen: NO
         SUPPORTS_MACCATALYST: NO
+  ReedlesCanvasTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: ReedlesCanvasTests
+    dependencies:
+      - target: ReedlesCanvas
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.aether.reedlescanvas.tests
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "2"
+        GENERATE_INFOPLIST_FILE: YES

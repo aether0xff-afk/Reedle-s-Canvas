@@ -8,7 +8,15 @@ iPadOS에서 학생과 AI가 같은 캔버스에 필기하는 학습 도구입�
 
 현재 캔버스는 4096×4096 포인트의 **유한한 시험 공간**입니다. 획별 ID·월드 좌표·AI 레이어와 노트 형식으로의 마이그레이션은 다음 단계입니다. 실제 기기에서 1000획과 펜 지연을 측정하기 전까지 AET-32 완료로 간주하지 않습니다.
 
-Mac에서 `brew install xcodegen`, `xcodegen generate` 후 생성된 `ReedlesCanvas.xcodeproj`를 Xcode로 열 수 있습니다. GitHub Actions의 `iPad app build`는 macOS에서 iPad Simulator 대상의 **서명 없는 컴파일**을 검사합니다. 이 빌드 산출물은 실제 iPad에 설치할 수 없으며 기기 설치에는 별도의 서명이 필요합니다.
+Mac에서 `brew install xcodegen`, `xcodegen generate` 후 생성된 `ReedlesCanvas.xcodeproj`를 Xcode로 여세요. `ReedlesCanvas` 스킴과 iPad 시뮬레이터를 선택하고 ⌘U로 테스트합니다. GitHub Actions의 `iPad app build`도 같은 스킴을 실행합니다.
+
+복원 테스트는 펜과 마커를 섞은 합성 1,000획을 파일에 저장하고 새 문서에서 엽니다. 획 순서와 위치, 색, 굵기, 필압, 기울기, 시각을 대조합니다. 별도의 테스트로 손상 파일의 원본 보존과 저장 실패 후 캔버스를 다시 열어 재저장하는 경로를 확인합니다.
+
+실기기에서는 Xcode에서 개발 팀을 선택해 서명·설치한 뒤 다음 순서로 확인합니다.
+
+1. Apple Pencil로 색과 굵기를 바꿔 가며 1,000획을 입력합니다. 화면의 획 수와 시작·중간·마지막 영역의 필기를 기록합니다.
+2. 앱을 홈 화면으로 보낸 후 종료하고 다시 엽니다. 획 수, 세 영역의 위치와 스타일을 기록과 대조합니다.
+3. 120Hz 지원 iPad에서 긴 연속 획을 그을 때 펜 끝과 잉크 사이의 지연이나 끊김을 관찰합니다. 기기 모델, iPadOS 버전, 저전력 모드 상태를 결과와 함께 기록합니다.
 
 ## 첫 수직 슬라이스
 

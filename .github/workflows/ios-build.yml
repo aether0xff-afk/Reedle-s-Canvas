@@ -2,7 +2,7 @@ name: iPad app build
 
 on:
   push:
-    branches: [main, aet-34-canvas-contracts]
+    branches: [main, aet-34-canvas-contracts, codex/aet-32-drawing-round-trip]
   pull_request:
   workflow_dispatch:
 
@@ -28,7 +28,27 @@ jobs:
         run: brew install xcodegen
       - name: Generate Xcode project
         run: xcodegen generate
-      - name: Build for iPad Simulator
+      - name: Select an available iPad simulator
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+
+          inventory = subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "--json"])
+          for runtime, devices in json.loads(inventory)["devices"].items():
+              platform, *version = runtime.rsplit(".", 1)[-1].split("-")
+              if platform != "iOS" or int(version[0]) < 17:
+                  continue
+              for device in devices:
+                  if device["deviceTypeIdentifier"].split(".")[-1].startswith("iPad"):
+                      print(f'Selected {device["name"]} on {runtime}')
+                      with open(os.environ["GITHUB_ENV"], "a") as env:
+                          print(f'SIMULATOR_UDID={device["udid"]}', file=env)
+                      raise SystemExit(0)
+          raise SystemExit("No available iPad simulator with iOS 17 or later")
+          PY
+      - name: Build and run tests on iPad Simulator
         run: |
           xcodebuild -version
           xcodebuild \
@@ -36,7 +56,7 @@ jobs:
             -scheme ReedlesCanvas \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
-            build
+            -parallel-testing-enabled NO \
+            test

@@ -32,7 +32,7 @@ struct PencilCanvasView: UIViewRepresentable {
     func updateUIView(_ uiView: PKCanvasView, context: Context) { }
 
     static func dismantleUIView(_ uiView: PKCanvasView, coordinator: Coordinator) {
-        coordinator.document.saveNow()
+        coordinator.document.detach(uiView)
         coordinator.toolPicker.removeObserver(uiView)
     }
 
