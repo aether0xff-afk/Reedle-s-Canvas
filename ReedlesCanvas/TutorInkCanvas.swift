@@ -27,8 +27,10 @@ struct TutorInkCanvas: View {
         let layouts = Self.textLayouts(for: marks, font: letterSize.font)
         TimelineView(.animation(paused: reveal == nil)) { timeline in
             Canvas { context, size in
-                Self.paint(marks, layouts: layouts, camera: projection.camera, size: size,
-                           reveal: reveal, at: timeline.date, color: inkColor.color, in: context)
+                context.withCGContext { cg in
+                    Self.paint(marks, layouts: layouts, camera: projection.camera, size: size,
+                               reveal: reveal, at: timeline.date, color: inkColor.color, in: cg)
+                }
             }
         }
         .allowsHitTesting(false)
@@ -53,13 +55,10 @@ struct TutorInkCanvas: View {
         .onChange(of: letterSize) { _, _ in document.relayoutTutor() }
     }
 
-    static func snapshot(marks: [TutorMark], in region: CGRect) -> some View {
+    static func draw(marks: [TutorMark], in region: CGRect, context: CGContext) {
         let layouts = textLayouts(for: marks, font: TutorLetterSize.saved.font)
-        return Canvas { context, size in
-            paint(marks, layouts: layouts, camera: CanvasCamera(origin: region.origin, scale: 1), size: size,
-                  color: TutorInkColor.saved.color, in: context)
-        }
-        .frame(width: region.width, height: region.height)
+        paint(marks, layouts: layouts, camera: CanvasCamera(origin: region.origin, scale: 1), size: region.size,
+              color: TutorInkColor.saved.color, in: context)
     }
 
     private static func textLayouts(for marks: [TutorMark], font: UIFont) -> [UUID: TutorTextLayout] {
@@ -71,7 +70,7 @@ struct TutorInkCanvas: View {
     }
 
     private static func paint(_ marks: [TutorMark], layouts: [UUID: TutorTextLayout], camera: CanvasCamera, size: CGSize,
-                              reveal: Reveal? = nil, at date: Date = .now, color: UIColor, in context: GraphicsContext) {
+                              reveal: Reveal? = nil, at date: Date = .now, color: UIColor, in context: CGContext) {
         let crop = CGRect(origin: .zero, size: size)
         for mark in marks {
             let progress = reveal.map { $0.sequence.progress(for: mark.id, elapsed: date.timeIntervalSince($0.started)) } ?? 1
@@ -88,28 +87,30 @@ struct TutorInkCanvas: View {
     }
 
     private static func draw(_ ink: TutorInk, frame: CGRect, leader: [CGPoint], scale: CGFloat,
-                             progress: CGFloat, layout: TutorTextLayout?, color: UIColor, in context: GraphicsContext) {
-        let style = StrokeStyle(lineWidth: 2 * scale, lineCap: .round, lineJoin: .round)
-        let shading = GraphicsContext.Shading.color(Color(uiColor: color))
+                             progress: CGFloat, layout: TutorTextLayout?, color: UIColor, in context: CGContext) {
+        context.saveGState()
+        defer { context.restoreGState() }
+        context.setStrokeColor(color.cgColor)
+        context.setLineWidth(2 * scale)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
         if leader.count == 2 {
             let connector = ink == .drawing(.arrow) ? arrow(leader[0], leader[1], scale: scale) : line(leader)
-            context.stroke(connector.trimmedPath(from: 0, to: progress), with: shading, style: style)
+            context.addPath((progress < 1 ? connector.trimmedPath(from: 0, to: progress) : connector).cgPath)
+            context.strokePath()
         }
         switch ink {
         case .text, .math:
             guard let layout else { return }
-            context.withCGContext { cg in
-                cg.saveGState()
-                defer { cg.restoreGState() }
-                cg.clip(to: frame)
-                cg.translateBy(x: frame.minX, y: frame.minY)
-                cg.scaleBy(x: scale, y: scale)
-                layout.draw(progress: progress, color: color.cgColor, in: cg)
-            }
+            context.clip(to: frame)
+            context.translateBy(x: frame.minX, y: frame.minY)
+            context.scaleBy(x: scale, y: scale)
+            layout.draw(progress: progress, color: color.cgColor, in: context)
         case .drawing(let drawing):
             guard drawing != .arrow else { return }
             let path = shape(drawing, in: frame)
-            context.stroke(path.trimmedPath(from: 0, to: progress), with: shading, style: style)
+            context.addPath((progress < 1 ? path.trimmedPath(from: 0, to: progress) : path).cgPath)
+            context.strokePath()
         }
     }
 

@@ -53,7 +53,8 @@ struct NoteResourceExport: FileDocument {
                         let marks = try document.tutorMarksForExport(in: page.frame)
                         pdf.beginPage(withBounds: bounds, pageInfo: [:])
                         NotePDFSource.draw(original, in: bounds, context: pdf.cgContext)
-                        try drawInk(drawing, marks: marks, region: page.frame, in: bounds, maximumScale: 2)
+                        drawInk(drawing, marks: marks, region: page.frame, in: bounds,
+                                maximumScale: 2, context: pdf.cgContext)
                     }
                 } catch {
                     failure = error
@@ -85,7 +86,8 @@ struct NoteResourceExport: FileDocument {
             bitmap.fill(bounds)
             do {
                 try NotePDFSource.drawMaterials(in: region, from: store, context: bitmap.cgContext)
-                try drawInk(drawing, marks: marks, region: region, in: bounds, maximumScale: 4)
+                drawInk(drawing, marks: marks, region: region, in: bounds,
+                        maximumScale: 4, context: bitmap.cgContext)
             } catch {
                 failure = error
             }
@@ -97,16 +99,18 @@ struct NoteResourceExport: FileDocument {
 
     @MainActor
     private static func drawInk(_ drawing: PKDrawing, marks: [TutorMark], region: CGRect,
-                                in bounds: CGRect, maximumScale: CGFloat) throws {
+                                in bounds: CGRect, maximumScale: CGFloat, context: CGContext) {
         let scale = resolution(for: region, maximumScale: maximumScale)
         if !drawing.strokes.isEmpty {
             drawing.image(from: CGRect(origin: .zero, size: region.size), scale: scale).draw(in: bounds)
         }
         if !marks.isEmpty {
-            let overlay = ImageRenderer(content: TutorInkCanvas.snapshot(marks: marks, in: region))
-            overlay.scale = scale
-            guard let image = overlay.uiImage else { throw NoteResourceError.exportFailed }
-            image.draw(in: bounds)
+            context.saveGState()
+            defer { context.restoreGState() }
+            context.clip(to: bounds)
+            context.translateBy(x: bounds.minX, y: bounds.minY)
+            context.scaleBy(x: bounds.width / region.width, y: bounds.height / region.height)
+            TutorInkCanvas.draw(marks: marks, in: region, context: context)
         }
     }
 

@@ -486,11 +486,10 @@ final class DrawingDocument: ObservableObject {
     }
 
     private func registerInverse(of changes: [StrokeChange], shifts: [StrokeOrderShift]) {
-        let needsGroup = !history.isUndoing && !history.isRedoing
         history.enableUndoRegistration()
-        if needsGroup { history.beginUndoGrouping() }
+        history.beginUndoGrouping()
         history.registerUndo(withTarget: self) { document in document.applyInverse(of: changes, shifts: shifts) }
-        if needsGroup { history.endUndoGrouping() }
+        history.endUndoGrouping()
         history.disableUndoRegistration()
         objectWillChange.send()
     }
