@@ -3,6 +3,7 @@ import SwiftUI
 @MainActor
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject private var document: DrawingDocument
     @StateObject private var navigation: CanvasNavigation
     @StateObject private var pdfLibrary = NotePDFLibrary()
@@ -94,7 +95,7 @@ struct ContentView: View {
                     }
                     PencilCanvasView(document: document, navigation: navigation)
                     TutorInkCanvas(document: document, projection: navigation.projection,
-                                   pencilInUse: navigation.isUsingPencil)
+                                   pencilInUse: navigation.isUsingPencil, reduceMotion: reduceMotion)
                     tutorNotice
                 }
                 .clipped()

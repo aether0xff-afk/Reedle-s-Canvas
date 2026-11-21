@@ -120,8 +120,8 @@ private struct AnimationHost: View {
     let projection: CanvasProjection
 
     var body: some View {
-        TutorInkCanvas(document: document, projection: projection, pencilInUse: controls.pencilInUse)
-            .environment(\.accessibilityReduceMotion, controls.reduceMotion)
+        TutorInkCanvas(document: document, projection: projection, pencilInUse: controls.pencilInUse,
+                       reduceMotion: controls.reduceMotion)
             .background(Color.white)
             .ignoresSafeArea()
     }

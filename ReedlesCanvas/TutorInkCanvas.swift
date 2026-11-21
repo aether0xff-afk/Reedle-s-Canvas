@@ -7,8 +7,7 @@ struct TutorInkCanvas: View {
     @ObservedObject var document: DrawingDocument
     @ObservedObject var projection: CanvasProjection
     let pencilInUse: Bool
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let reduceMotion: Bool
     @AppStorage(TutorLetterSize.defaultsKey) private var letterSize = TutorLetterSize.standard
     @AppStorage(TutorInkColor.defaultsKey) private var inkColor = TutorInkColor.blue
     @State private var reveal: Reveal?
