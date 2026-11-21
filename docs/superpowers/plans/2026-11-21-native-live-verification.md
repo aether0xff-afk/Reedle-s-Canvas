@@ -23,18 +23,20 @@
 ## Task 1 — Native reveal coverage
 
 - [x] Add ReedlesCanvasTests/TutorAnimationTests.swift using a real UIHostingController.
-- [ ] Run both new cases on the Mac simulator together with the regression suite.
-- [ ] Inspect failures and saved screenshots; fix actual implementation issues if found.
-- [ ] Record the proven AET-42 behavior in Linear and verification docs.
+- [x] Run both new cases on the Mac simulator together with the regression suite.
+- [x] Inspect failures and saved screenshots; fix actual implementation issues if found.
+- [x] Record the proven AET-42 behavior in Linear and verification docs.
 
 ## Task 2 — Live native correction flow
 
-- [ ] Add tools/run_live_ipad.py to prepare a per-run public key and run the local HTTPS/SSE gateway with a memory-only provider credential.
-- [ ] Add an optional, ignored LiveGateway.json test resource and ReedlesCanvasTests/TutorLiveGatewayTests.swift.
-- [ ] Verify sealed credential decryption, run/key binding, ciphertext tampering, invalid tokens and failure cleanup locally.
-- [ ] Run the existing native capture/client/approval/storage path against live BAZE for 2+2=5 and 2+2=4.
-- [ ] Verify the actual responses, screenshots, persisted layers and student records.
-- [ ] Remove the encrypted delivery file from the active branch, verify cleanup, and document exact coverage and remaining physical-device gaps.
+- [x] Add tools/run_live_ipad.py to prepare a per-run public key and run the local HTTPS/SSE gateway with a memory-only provider credential.
+- [x] Add an optional, ignored LiveGateway.json test resource and ReedlesCanvasTests/TutorLiveGatewayTests.swift.
+- [x] Verify sealed credential decryption, run/key binding, ciphertext tampering, invalid tokens and failure cleanup locally.
+- [x] Run the existing native capture/client/approval/storage path against live BAZE for 2+2=5 and 2+2=4.
+- [x] Verify the actual responses, screenshots, persisted layers and student records.
+- [x] Remove the encrypted delivery file from the active branch, verify cleanup, and document exact coverage and remaining physical-device gaps.
+
+The full run 44920074897 passed all 74 native unit cases and three UI cases without skips. The result artifact's SHA-256 was verified and all 1,508 ZIP members were scanned for the provider credential. The consumed encrypted packet was removed while the already-started gateway continued running; the runner's final log confirms gateway termination and private-key/token cleanup. AET-42 is complete. Re-reading the project acceptance condition exposed that AET-48 still requires automatic application without manual approval; follow the separate autonomous-response plan for that gap.
 
 ## Execution rulings
 

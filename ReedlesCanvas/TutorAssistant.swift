@@ -77,7 +77,8 @@ struct TutorConnection {
 @MainActor
 final class TutorAssistant: ObservableObject {
     @Published private(set) var connection = TutorConnection.load()
-    @Published private(set) var latestObservation: (requestID: UUID, reply: TutorGatewayReply, proposalAnchor: CGRect?)?
+    @Published private(set) var latestObservation: (requestID: UUID, reply: TutorGatewayReply,
+                                                 proposalAnchor: CGRect?, applied: Bool)?
     @Published private(set) var status: String?
     @Published private(set) var busy = false
     @Published private(set) var progress: TutorStreamPhase?
@@ -89,6 +90,11 @@ final class TutorAssistant: ObservableObject {
     private var retryMessage: String?
 
     var latest: TutorGatewayReply? { latestObservation?.reply }
+
+    var pendingProposal: TutorProposal? {
+        guard let observation = latestObservation, !observation.applied else { return nil }
+        return observation.reply.proposal
+    }
 
     func presents(_ followUp: TutorFollowUp) -> Bool {
         connection.mode.presentsFollowUp(followUp.requestID, promptedBy: latestObservation?.requestID)
@@ -159,7 +165,20 @@ final class TutorAssistant: ObservableObject {
                 let reply = received.applying(sensitivity)
                 try document.finishTutorObservation(capture, reply: reply, sensitivity: sensitivity)
                 self.fingerprint = capture.fingerprint
-                self.latestObservation = (capture.context.requestID, reply, reply.proposalAnchor(in: capture))
+                self.latestObservation = (capture.context.requestID, reply, reply.proposalAnchor(in: capture),
+                                          applied: false)
+                if !manual, self.connection.mode == .automatic, let proposal = reply.proposal {
+                    do {
+                        try document.approveTutorProposal(proposal)
+                        self.latestObservation = (capture.context.requestID, reply, reply.proposalAnchor(in: capture),
+                                                  applied: true)
+                    } catch TutorProposalError.stale {
+                        self.dismissReply()
+                    } catch {
+                        // Retain the validated proposal if local storage is temporarily unavailable.
+                        self.status = "튜터 판서를 저장하지 못했습니다. 제안에서 다시 적용할 수 있습니다."
+                    }
+                }
             } catch TutorProposalError.stale {
                 // A newer Pencil edit takes priority over this reply.
             } catch {

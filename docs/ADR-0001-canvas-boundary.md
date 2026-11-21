@@ -37,13 +37,13 @@ JSON Schema는 문서와 기본 형태 검증에 사용한다. 동일 ID 중복,
 
 ## 검증 대기
 
-2026년 11월 21일 기준 Linear의 23개 항목 중 20개가 완료됐다. GitHub의 Mac에서 iPad 단위 테스트 71개와 UI 테스트 3개, 서버·평가 테스트 83개가 통과했다. 20페이지 PDF의 원문·학생 필기·튜터 판서 내보내기와 1만 획 페이지 로딩도 이 실행에서 확인했다. 이후 BAZE 스트리밍 호환성 수정에 대해 Windows의 서버·평가 검사 84개와 실제 필기 60개를 검증했다. 앱 소스는 변경하지 않았다. WSL에서는 Swift 테스트 61개와 Swift 클라이언트·FastAPI의 HTTP 연동을 검증했다. [iPad 자동 검사 결과](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44908173895) · [실제 모델 평가](evaluation.md)
+2026년 11월 22일 기준 Linear의 23개 항목 중 21개가 완료됐다. GitHub의 Mac에서 iPad 단위 테스트 74개와 UI 테스트 3개가 실패·건너뜀 없이 통과했다. 실제 SwiftUI 판서 애니메이션, 20페이지 PDF 내보내기, 1만 획 페이지 로딩과 실제 BAZE 응답의 힌트·수정·복원을 확인했다. 같은 실행의 서버 65개·평가 19개·실행 도구 4개·암호화 전달 8개 검사도 통과했다. [iPad 자동 검사 결과](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44920074897) · [검증 기록](../evaluation/results/native-2026-11-22.json) · [실제 필기 60개 모델 평가](evaluation.md)
 
 | 항목 | 확인한 범위 | 남은 검증 |
 | --- | --- | --- |
-| AET-42 | 순차 공개 시점과 HTTP 요청 취소 | 실제 판서 애니메이션의 Pencil 입력 중단과 동작 줄이기 |
-| AET-48 | 모의 공급자를 통한 힌트·수정 응답·복원 | 실제 iPad에서 이어지는 입력·인식·수정 시연 |
-| AET-49 | 계측과 앱 수명주기용 자동 검사 코드 | Pencil·프레임·메모리·배터리·회전·분할 화면의 실행 지표 |
+| AET-42 완료 | 실제 경로·글자 순차 등장, 입력 재개·동작 줄이기·숨김·복원·undo | 물리 Pencil 지연은 AET-49에 포함 |
+| AET-48 진행 중 | 실제 PencilKit PNG·BAZE HTTPS/SSE·수동 승인·수정 피드백·복원 | pen-up 뒤 별도 승인 없는 자동 판서 |
+| AET-49 진행 중 | 시뮬레이터 1만 획 시간·CPU·메모리, 회전·백그라운드·재실행 | 좁은 분할 화면, 물리 Pencil·프레임·배터리 지표 |
 
 GitHub 연결을 갱신한 뒤 저장소 소유자 권한으로 `codex/canvas-camera` 브랜치를 올려 macOS 자동 검사를 실행했다. 검증한 앱 소스 패키지는 `.build/ReedlesCanvas-Verified.zip`에 있다. BAZE 키는 Windows 계정 암호화로 저장했고 Codex와 Canvas 서버에서 실제 요청을 확인했다. AET-33·44·50의 연결·인식 품질 기록·평가 작업을 완료했다. 실제 모델은 오탐 2건과 오류 누락 5건이 있어 수동 질문 모드를 권고하며, 운영용 자동 개입 임계값은 확정하지 않았다. 물리 공개 필기 자료는 회로 기호에 한정되며, 오류 사례가 없어 개입 누락률을 평가하려면 추가 자료가 필요하다. [기기 검증 경로](ipad-device-spike.md#aet-31-검증-결과와-빌드-경로) · [평가 자료와 실측](evaluation.md) · [키와 비용 검증](baze-verification.md)
 

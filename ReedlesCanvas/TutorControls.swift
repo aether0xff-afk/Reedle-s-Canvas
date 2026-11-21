@@ -33,7 +33,7 @@ struct TutorControls: View {
         case .reading: return "필기 읽는 중…"
         case .drafting: return "답변 작성 중…"
         case nil:
-            if assistant.latest?.proposal != nil { return "튜터 제안" }
+            if assistant.pendingProposal != nil { return "튜터 제안" }
             if visibleFollowUp != nil { return "튜터 피드백" }
             return "튜터"
         }
@@ -69,7 +69,7 @@ struct TutorControls: View {
                 }
                 if assistant.latest != nil || visibleFollowUp != nil {
                     Button("최근 인식 결과") { panel = .recognition }
-                    if let proposal = assistant.latest?.proposal {
+                    if let proposal = assistant.pendingProposal {
                         Button("새 판서 제안 보기") { panel = .proposal(proposal) }
                     }
                 }
@@ -283,9 +283,9 @@ private struct TutorConnectionEditor: View {
                 }
                 Section {
                     Toggle("튜터 서비스 사용", isOn: $connection.enabled)
-                    Toggle("필기 후 자동 제안", isOn: $connection.automatic)
+                    Toggle("필기 후 자동 판서", isOn: $connection.automatic)
                         .disabled(!connection.enabled)
-                    Picker("자동 제안 민감도", selection: $connection.sensitivity) {
+                    Picker("자동 판서 민감도", selection: $connection.sensitivity) {
                         ForEach(TutorSensitivity.allCases, id: \.self) { sensitivity in
                             Text(sensitivity.title).tag(sensitivity)
                         }
@@ -302,7 +302,8 @@ private struct TutorConnectionEditor: View {
                 }
                 Section("필기 전송과 보관") {
                     Text("튜터는 화면에 보이는 일부 필기 이미지와 관련 인식 기록을 HTTPS로 서버에 보내며, 서버는 이를 BAZE로 전달합니다. 해당 영역에 PDF가 있으면 문제 원문도 이미지에 포함됩니다. 조용히 모드에서는 직접 질문할 때만 전송합니다.")
-                    Text("튜터 응답은 서버 설정에 따라 일시적으로 메모리에 보관됩니다. 확정된 인식 기록과 승인한 판서는 현재 노트와 SQLite 백업에 포함됩니다.")
+                    Text("자동 판서를 켜면 필기를 마친 뒤 검증된 응답을 별도 승인 없이 튜터 레이어에 표시합니다. 학생 원본은 바꾸지 않으며 판서를 숨기거나 되돌릴 수 있습니다. 직접 질문한 판서는 제안을 확인한 뒤 적용합니다.")
+                    Text("튜터 응답은 서버 설정에 따라 일시적으로 메모리에 보관됩니다. 확정된 인식 기록과 적용한 판서는 현재 노트와 SQLite 백업에 포함됩니다.")
                     if let policy = URL(string: "https://baze.co/legal/privacy/") {
                         Link("BAZE 개인정보처리방침", destination: policy)
                     }

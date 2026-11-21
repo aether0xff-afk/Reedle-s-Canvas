@@ -1,0 +1,129 @@
+{
+  "package": "ReedlesCanvas-Verified.zip",
+  "sha256": "64da17ba7022c84c46e80dfb75ef4c0663e5ebcdc7becd111c2aa5e4808eee0a",
+  "source_local_commit": "fb093ea60e10c7baf82369bcf0fbaa5df5a94bc5",
+  "source_remote_commit": "90fa6bc143faf311eea2e6ad2230af469875c91b",
+  "source_tree": "427c7315191767d4e5e0180848dd8ae178ccc947",
+  "run_url": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44920074897",
+  "xcode": "26.6 (17F113)",
+  "simulator": "iPad mini (A17 Pro)",
+  "tests": {
+    "ipad_unit": 74,
+    "ipad_ui": 3,
+    "server": 65,
+    "evaluation": 19,
+    "runner": 4,
+    "sealed_bootstrap": 8,
+    "failures": 0,
+    "skipped": 0
+  },
+  "verified": [
+    "page editing undo and redo",
+    "10000 native strokes with spatial paging",
+    "20-page PDF source, student ink and tutor export",
+    "PDF background in tutor crops",
+    "app rotation, background and relaunch",
+    "progressive native paths and glyphs with controlled frame time",
+    "Pencil resume, reduced motion, hide/show, undo and restoration",
+    "actual PencilKit images over native HTTPS/SSE to BAZE, manual proposal approval and corrected follow-up"
+  ],
+  "not_measured": [
+    "physical Apple Pencil latency and battery use",
+    "narrow split-screen toolbar layout",
+    "automatic pen-up proposal application without approval"
+  ],
+  "artifacts": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44920074897/artifacts/14713906975",
+  "gateway_verification": {
+    "source_local_commit": "6f014b72f9ccc54c2c3344f884b138f24a1a9621",
+    "source_remote_commit": "11d638d34e9ef5f2d93fbfe7d902a359b7f89b36",
+    "model": "gpt-6.1-terra",
+    "real_handwriting_cases": 60,
+    "valid_structured_results": 60,
+    "server_tests": 65,
+    "evaluation_tests": 19,
+    "report": "tutor-evaluation/baze-real-60-report.json",
+    "public_report": "https://github.com/aether0xff-afk/Reedle-s-Canvas/blob/11d638d34e9ef5f2d93fbfe7d902a359b7f89b36/docs/evaluation.md",
+    "automatic_intervention_production_threshold_recommended": false,
+    "app_source_changed": false
+  },
+  "linear_progress": {
+    "completed": 21,
+    "total": 23,
+    "remaining": [
+      "AET-48",
+      "AET-49"
+    ]
+  },
+  "artifact_sha256": "894ba098ca7c7b2a334c2f7a729ed76fe63122a8bf4067759d0f2b4f8e612dcd",
+  "artifact_members_scanned_for_provider_key": 1508,
+  "live_observations": {
+    "followUp": "4가 맞아요.",
+    "studentStrokesAfterReopen": 7,
+    "hint": [
+      {
+        "type": "draw",
+        "content": "circle",
+        "targetID": "D018309E-9172-427C-B854-6ADBAB2E680D"
+      },
+      {
+        "targetID": "D018309E-9172-427C-B854-6ADBAB2E680D",
+        "content": "다시 계산해 볼래?",
+        "type": "askQuestion"
+      }
+    ],
+    "correctedConfidence": 0.99,
+    "firstTranscript": "2+2=5",
+    "firstConfidence": 0.99,
+    "correctedTranscript": "2+2=4",
+    "approval": "manual",
+    "automatic_pen_up_application_verified": false,
+    "provider_latency_ms": [
+      6124,
+      4949
+    ]
+  },
+  "paging_metrics": [
+    {
+      "name": "Memory Physical",
+      "unit": "kB",
+      "measurements": [
+        835.584,
+        4161.536,
+        802.816
+      ],
+      "mean": 1933.312
+    },
+    {
+      "name": "Clock Monotonic Time",
+      "unit": "s",
+      "measurements": [
+        0.111480517,
+        0.38962283600000003,
+        0.166473735
+      ],
+      "mean": 0.22252569600000002
+    },
+    {
+      "name": "CPU Time",
+      "unit": "s",
+      "measurements": [
+        0.12054713400000001,
+        0.186585629,
+        0.17523022800000002
+      ],
+      "mean": 0.1607876636666667
+    },
+    {
+      "name": "Memory Peak Physical",
+      "unit": "kB",
+      "measurements": [
+        100964.672,
+        105175.36,
+        105945.408
+      ],
+      "mean": 104028.48
+    }
+  ],
+  "measurement_scope": "iOS Simulator; not physical Pencil, device frame rate or battery",
+  "ephemeral_cleanup_logged": true
+}

@@ -66,6 +66,8 @@ final class TutorLiveGatewayTests: XCTestCase {
         XCTAssertEqual(try store.strokes(in: viewport), original)
         XCTAssertEqual(document.tutorAnnotations.count, proposal.actions.count,
                        "Automatic pen-up responses must appear without opening or approving a proposal")
+        XCTAssertNil(assistant.pendingProposal, "An applied automatic reply must not be offered for approval again")
+        XCTAssertTrue(document.canUndoTutor)
         attach(try NoteResourceExport.image(from: document).data, named: "Actual BAZE automatic hint")
         let marked = DrawingDocument(fileURL: noteURL)
         XCTAssertTrue(marked.updateViewport(viewport, surfaceOrigin: .zero))

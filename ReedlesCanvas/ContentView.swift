@@ -137,7 +137,7 @@ struct ContentView: View {
     private var tutorNotice: some View {
         if !inTutorExample, assistant.connection.enabled, document.aiLayerVisible,
            !navigation.isUsingPencil, !assistant.busy, scenePhase == .active, tutorPanel == nil {
-            if let observation = assistant.latestObservation, let proposal = observation.reply.proposal,
+            if let observation = assistant.latestObservation, let proposal = assistant.pendingProposal,
                let anchor = observation.proposalAnchor {
                 TutorCanvasNotice(projection: navigation.projection, anchor: anchor,
                                   obstacles: document.tutorNoticeObstacles, text: "판서 제안 보기") {
