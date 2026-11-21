@@ -24,7 +24,9 @@ final class TutorAnimationTests: XCTestCase {
         let marks = stage.document.tutorMarks
         XCTAssertEqual(marks.count, 4)
         let reference = stage.completeImage()
-        try await Task.sleep(for: .milliseconds(110))
+        try await stage.settle()
+        stage.controls.advance(by: 0.11)
+        try await stage.settle()
         let pathFrame = try stage.snapshot()
         XCTAssertGreaterThan(try stage.bluePixels(in: pathFrame, region: marks[0].frame), 0)
         XCTAssertLessThan(try stage.bluePixels(in: pathFrame, region: marks[0].frame),
@@ -32,7 +34,8 @@ final class TutorAnimationTests: XCTestCase {
         XCTAssertEqual(try stage.bluePixels(in: pathFrame, region: marks[1].frame), 0)
         XCTAssertEqual(try stage.bluePixels(in: pathFrame, region: marks[3].frame), 0)
 
-        try await Task.sleep(for: .milliseconds(480))
+        stage.controls.advance(by: 0.50)
+        try await stage.settle()
         let glyphFrame = try stage.snapshot()
         let glyphs = try stage.bluePixels(in: glyphFrame, region: marks[1].frame)
         XCTAssertGreaterThan(glyphs, 0)
@@ -84,6 +87,8 @@ final class TutorAnimationTests: XCTestCase {
         try stage.approve()
         reference = stage.completeImage()
         try await stage.settle()
+        stage.controls.advance(by: 0.11)
+        try await stage.settle()
         XCTAssertLessThan(try stage.bluePixels(in: stage.snapshot()), try stage.bluePixels(in: reference))
         stage.controls.reduceMotion = true
         try await stage.settle()
@@ -100,7 +105,9 @@ final class TutorAnimationTests: XCTestCase {
         try stage.document.undoTutor()
         try stage.approve()
         reference = stage.completeImage()
-        try await Task.sleep(for: .seconds(2.1))
+        try await stage.settle()
+        stage.controls.advance(by: 2.1)
+        try await stage.settle()
         try stage.assertComplete(reference)
         XCTAssertEqual(stage.document.tutorMarks.count, 4)
         XCTAssertEqual(stage.document.strokeCount, 1)
@@ -111,6 +118,14 @@ final class TutorAnimationTests: XCTestCase {
 private final class AnimationControls: ObservableObject {
     @Published var pencilInUse = false
     @Published var reduceMotion = false
+    @Published private(set) var time = Date(timeIntervalSinceReferenceDate: 0)
+
+    func advance(by seconds: TimeInterval) { time.addTimeInterval(seconds) }
+
+    func sleep(for seconds: TimeInterval) async throws {
+        let deadline = time.addingTimeInterval(seconds)
+        while time < deadline { try await Task.sleep(for: .milliseconds(20)) }
+    }
 }
 
 @MainActor
@@ -121,7 +136,8 @@ private struct AnimationHost: View {
 
     var body: some View {
         TutorInkCanvas(document: document, projection: projection, pencilInUse: controls.pencilInUse,
-                       reduceMotion: controls.reduceMotion)
+                       reduceMotion: controls.reduceMotion,
+                       timing: TutorAnimationTiming(date: { _ in controls.time }, sleep: { try await controls.sleep(for: $0) }))
             .background(Color.white)
             .ignoresSafeArea()
     }

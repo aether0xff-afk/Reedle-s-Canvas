@@ -3,11 +3,22 @@ import SwiftUI
 import UIKit
 
 @MainActor
+struct TutorAnimationTiming {
+    var date: @MainActor (Date) -> Date
+    var sleep: @MainActor (TimeInterval) async throws -> Void
+
+    static let system = Self(date: { $0 }, sleep: { seconds in
+        try await Task.sleep(for: .seconds(seconds))
+    })
+}
+
+@MainActor
 struct TutorInkCanvas: View {
     @ObservedObject var document: DrawingDocument
     @ObservedObject var projection: CanvasProjection
     let pencilInUse: Bool
     let reduceMotion: Bool
+    var timing = TutorAnimationTiming.system
     @AppStorage(TutorLetterSize.defaultsKey) private var letterSize = TutorLetterSize.standard
     @AppStorage(TutorInkColor.defaultsKey) private var inkColor = TutorInkColor.blue
     @State private var reveal: Reveal?
@@ -25,10 +36,11 @@ struct TutorInkCanvas: View {
         let marks = document.aiLayerVisible ? document.tutorMarks : []
         let layouts = Self.textLayouts(for: marks, font: letterSize.font)
         TimelineView(.animation(paused: reveal == nil)) { timeline in
+            let date = timing.date(timeline.date)
             Canvas { context, size in
                 context.withCGContext { cg in
                     Self.paint(marks, layouts: layouts, camera: projection.camera, size: size,
-                               reveal: reveal, at: timeline.date, color: inkColor.color, in: cg)
+                               reveal: reveal, at: date, color: inkColor.color, in: cg)
                 }
             }
         }
@@ -44,8 +56,8 @@ struct TutorInkCanvas: View {
                 reveal = nil
                 return
             }
-            reveal = Reveal(sequence: sequence, started: .now)
-            try? await Task.sleep(for: .seconds(sequence.duration))
+            reveal = Reveal(sequence: sequence, started: timing.date(.now))
+            try? await timing.sleep(sequence.duration)
             if !Task.isCancelled { reveal = nil }
         }
         .onChange(of: pencilInUse) { _, active in if active { reveal = nil } }
