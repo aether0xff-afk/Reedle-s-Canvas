@@ -1,3 +1,4 @@
+import Combine
 import CoreImage
 import PencilKit
 import UIKit
@@ -21,46 +22,58 @@ final class TutorLiveGatewayTests: XCTestCase {
             #endif
         }
         let config = try JSONDecoder().decode(Configuration.self, from: Data(contentsOf: resource))
-        let endpoint = try TutorGateway.observationEndpoint(config.baseURL)
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         let noteURL = directory.appendingPathComponent("drawing.pkdrawing")
         let template = try TutorExample.open()
-        try XCTUnwrap(template.store).export(to: noteURL.deletingPathExtension().appendingPathExtension("sqlite"))
         let document = DrawingDocument(fileURL: noteURL)
         let canvas = PagedCanvasView()
         document.attach(canvas)
         let viewport = CGRect(x: 0, y: 0, width: 760, height: 600)
         XCTAssertTrue(document.updateViewport(viewport, surfaceOrigin: .zero))
+        XCTAssertTrue(template.updateViewport(viewport, surfaceOrigin: .zero))
+        let savedConnection = TutorConnection.load()
+        let assistant = TutorAssistant()
+        defer { try? assistant.updateConnection(savedConnection, in: document) }
+        try assistant.updateConnection(TutorConnection(server: config.baseURL, token: config.accessToken,
+                                                       enabled: true, automatic: true), in: document)
+        var phases: [TutorStreamPhase] = []
+        let progress = assistant.$progress.compactMap { $0 }.sink { phases.append($0) }
+        defer { progress.cancel() }
+        // Exercise the student input and assistant scheduling paths, without a
+        // direct gateway call or a proposal approval anywhere in this test.
+        document.beginToolInteraction()
+        canvas.drawing = template.drawing
+        document.drawingDidChange(canvas)
+        document.endToolInteraction()
+        try document.flushPendingEdits()
         let store = try XCTUnwrap(document.store)
         let original = try store.strokes(in: viewport)
         XCTAssertEqual(original.count, 7)
+        let answerID = try XCTUnwrap(original.last).id
         let first = try XCTUnwrap(document.captureForTutor(manual: true))
         attach(first.png, named: "Actual PencilKit 2+2=5 input")
-        var firstPhases: [TutorStreamPhase] = []
-        let firstReply = try await TutorGateway.observe(first, endpoint: endpoint, accessToken: config.accessToken) {
-            firstPhases.append($0)
-        }
-        XCTAssertEqual(firstPhases, [.reading, .drafting])
+        assistant.inkChanged(in: document, ready: true)
+        let firstReply = try await reply(from: assistant)
+        XCTAssertEqual(phases, [.reading, .drafting])
         XCTAssertEqual(firstReply.recognition.kind, .math)
         XCTAssertTrue(firstReply.recognition.transcript.replacingOccurrences(of: " ", with: "").contains("2+2=5"))
         let proposal = try XCTUnwrap(firstReply.proposal)
         XCTAssertTrue(proposal.actions.contains { $0.kind == .draw && $0.content == "circle"
-            && $0.targetID == TutorExample.answerID })
-        XCTAssertTrue(proposal.actions.contains { $0.kind == .askQuestion && $0.targetID == TutorExample.answerID })
-        try document.finishTutorObservation(first, reply: firstReply)
-        try document.approveTutorProposal(proposal)
+            && $0.targetID == answerID })
+        XCTAssertTrue(proposal.actions.contains { $0.kind == .askQuestion && $0.targetID == answerID })
         XCTAssertEqual(try store.strokes(in: viewport), original)
-        XCTAssertEqual(document.tutorAnnotations.count, proposal.actions.count)
-        attach(try NoteResourceExport.image(from: document).data, named: "Actual BAZE approved hint")
+        XCTAssertEqual(document.tutorAnnotations.count, proposal.actions.count,
+                       "Automatic pen-up responses must appear without opening or approving a proposal")
+        attach(try NoteResourceExport.image(from: document).data, named: "Actual BAZE automatic hint")
         let marked = DrawingDocument(fileURL: noteURL)
         XCTAssertTrue(marked.updateViewport(viewport, surfaceOrigin: .zero))
         XCTAssertEqual(try XCTUnwrap(marked.store).strokes(in: viewport), original)
         XCTAssertEqual(marked.tutorAnnotations, document.tutorAnnotations)
 
         // Replace only the student's final digit through the actual native edit path.
-        let withoutFive = zip(original, canvas.drawing.strokes).filter { $0.0.id != TutorExample.answerID }
+        let withoutFive = zip(original, canvas.drawing.strokes).filter { $0.0.id != answerID }
             .map { $0.1 }
         let four = [CGPoint(x: 284, y: 129), CGPoint(x: 267, y: 151), CGPoint(x: 296, y: 151),
                     CGPoint(x: 286, y: 151), CGPoint(x: 286, y: 128), CGPoint(x: 286, y: 166)]
@@ -76,7 +89,7 @@ final class TutorLiveGatewayTests: XCTestCase {
         try document.flushPendingEdits()
         let corrected = try store.strokes(in: viewport)
         XCTAssertEqual(corrected.count, 7)
-        XCTAssertFalse(corrected.contains { $0.id == TutorExample.answerID })
+        XCTAssertFalse(corrected.contains { $0.id == answerID })
         // A student edit can re-encode PencilKit's archive. Check the unchanged
         // ink in world coordinates; approval above still requires exact records.
         try assertSameInk(Array(original.prefix(6)), Array(corrected.prefix(6)))
@@ -84,15 +97,13 @@ final class TutorLiveGatewayTests: XCTestCase {
         XCTAssertGreaterThan(second.context.inkRevision, first.context.inkRevision)
         XCTAssertTrue(second.recent.contains { $0.offeredHint == true })
         attach(second.png, named: "Actual PencilKit 2+2=4 correction")
-        var secondPhases: [TutorStreamPhase] = []
-        let followUp = try await TutorGateway.observe(second, endpoint: endpoint, accessToken: config.accessToken) {
-            secondPhases.append($0)
-        }
-        XCTAssertEqual(secondPhases, [.reading, .drafting])
+        phases.removeAll()
+        assistant.inkChanged(in: document, ready: true)
+        let followUp = try await reply(from: assistant)
+        XCTAssertEqual(phases, [.reading, .drafting])
         XCTAssertEqual(followUp.recognition.kind, .math)
         XCTAssertTrue(followUp.recognition.transcript.replacingOccurrences(of: " ", with: "").contains("2+2=4"))
         XCTAssertNil(followUp.proposal)
-        try document.finishTutorObservation(second, reply: followUp)
         XCTAssertNotNil(document.tutorFollowUp)
         XCTAssertFalse(try XCTUnwrap(document.tutorFollowUp).text.isEmpty)
         XCTAssertEqual(try store.strokes(in: viewport), corrected)
@@ -110,6 +121,7 @@ final class TutorLiveGatewayTests: XCTestCase {
             "correctedTranscript": followUp.recognition.transcript,
             "correctedConfidence": followUp.recognition.confidence,
             "followUp": followUp.reason,
+            "automaticWithoutApproval": true,
             "studentStrokesAfterReopen": reopened.strokeCount
         ]
         let evidence = XCTAttachment(data: try JSONSerialization.data(withJSONObject: proof, options: [.prettyPrinted]),
@@ -117,6 +129,17 @@ final class TutorLiveGatewayTests: XCTestCase {
         evidence.name = "Actual BAZE native round trip"
         evidence.lifetime = .keepAlways
         add(evidence)
+    }
+
+    @MainActor
+    private func reply(from assistant: TutorAssistant) async throws -> TutorGatewayReply {
+        let deadline = Date().addingTimeInterval(35)
+        while assistant.busy, Date() < deadline {
+            try await Task.sleep(for: .milliseconds(25))
+        }
+        XCTAssertFalse(assistant.busy, "Automatic observation exceeded its bounded deadline")
+        XCTAssertNil(assistant.status)
+        return try XCTUnwrap(assistant.latest)
     }
 
     private func attach(_ png: Data, named name: String) {
