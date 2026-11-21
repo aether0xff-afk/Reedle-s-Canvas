@@ -27,4 +27,4 @@ FastAPI 서버가 iPad의 필기 이미지와 주변 획을 받아 BAZE 비전 �
 
 2026년 11월 21일 WSL의 Swift 테스트 61개와 GitHub macOS의 iPad 단위 테스트 71개·UI 테스트 3개가 통과했다. PDF 저장 검사는 20페이지 각각의 학생 획과 튜터 대상 ID를 원본 노트와 백업에서 다시 읽어 대조한다. iPad 검사에서는 PDF 원문과 학생 잉크를 함께 캡처하고, 내보낸 20페이지에서 원문·학생 필기·튜터 밑줄·수식을 이미지로 대조했다. 튜터 판서는 화면과 PDF에 같은 Core Graphics 경로와 글리프 배치를 사용한다. [자동 검사 결과](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44908173895)
 
-BAZE는 계정마다 모델과 크레딧 조건이 다르다. 이 연결의 멀티모달 응답 품질, 비용과 지연 시간은 해당 계정의 비전 모델에 실제 요청을 보내 확인해야 한다. [Chat Completions](https://docs.mindlogic.ai/docs/general/api-gateway/reference/chat-completions) · [BAZE 사용량](https://docs.mindlogic.ai/docs/general/api-gateway/reference/usage)
+2026년 11월 21일 `api.baze.co`의 `gpt-6.1-terra`에서 실제 PNG 3개로 연결을 확인하고 익명 실제 필기 60개를 평가했다. 60개 모두 구조화 응답을 반환했고 과목 분류는 57/60, 불필요한 개입은 2/51, 필요한 개입 누락은 5/9였다. 현재 결과에서는 수동 질문 모드를 권장한다. 키는 Windows 계정 암호화 저장소에 두고 서버 환경과 Codex 인증 보조 명령에서만 읽는다. [연결·키·비용 검증](baze-verification.md) · [과목별 실측과 임계값 검토](evaluation.md#실제-baze-평가-결과--2026-11-21)

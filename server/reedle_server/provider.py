@@ -259,7 +259,7 @@ async def _read_stream(response: httpx.Response, on_delta: Callable[[], None]) -
             if not isinstance(choice, dict) or choice.get("index", 0) != 0:
                 break
             delta = choice.get("delta")
-            if not isinstance(delta, dict) or delta.get("role", "assistant") != "assistant":
+            if not isinstance(delta, dict) or delta.get("role") not in (None, "assistant"):
                 break
             if any(delta.get(field) for field in ("refusal", "tool_calls", "function_call")):
                 break

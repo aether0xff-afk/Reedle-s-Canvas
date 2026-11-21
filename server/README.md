@@ -11,7 +11,7 @@ uv run --directory server --locked pytest -q
 uv run --directory server --locked --no-dev uvicorn reedle_server.app:app --host 127.0.0.1 --port 8000
 ```
 
-테스트는 로컬 ASGI 요청과 가짜 BAZE 응답으로 동작합니다. 두 PNG 관찰로 `2+2=5`에 힌트를 주고, 같은 노트에서 이어 쓴 `4`를 확인하는 흐름을 검증합니다. 실제 BAZE에서 선택한 모델이 PNG 입력, `response_format.json_schema`, SSE 스트리밍을 함께 지원하는지는 확인이 필요합니다. [BAZE 게이트웨이](https://docs.mindlogic.ai/docs/baze/api-gateway/getting-started/overview), [Chat Completions](https://docs.mindlogic.ai/docs/general/api-gateway/reference/chat-completions)
+테스트는 로컬 ASGI 요청과 가짜 BAZE 응답으로 동작합니다. 두 PNG 관찰로 `2+2=5`에 힌트를 주고, 같은 노트에서 이어 쓴 `4`를 확인하는 흐름을 검증합니다. 2026년 11월 21일 실제 BAZE의 `gpt-6.1-terra`에서 PNG 입력, `response_format.json_schema`, SSE 스트리밍을 함께 확인했고 실제 필기 60개의 인식·개입·지연을 측정했습니다. [실제 연결 검증](../docs/baze-verification.md) · [평가 결과](../docs/evaluation.md#실제-baze-평가-결과--2026-11-21)
 
 로컬 예시는 루프백 HTTP에서 실행합니다. iPad에서 연결할 때는 Uvicorn 앞에 HTTPS 서버를 두고 해당 HTTPS 주소를 앱에 입력합니다.
 
@@ -27,6 +27,8 @@ uv run --directory server --locked --no-dev uvicorn reedle_server.app:app --host
 | `REEDLE_PROVIDER_MAX_ATTEMPTS` | 재시도를 포함한 최대 시도 수. 기본값 2 |
 | `REEDLE_PROVIDER_MAX_OUTPUT_TOKENS` | BAZE 시도당 출력 상한. 기본값 1,200 |
 | `REEDLE_REPLY_CACHE_SECONDS` | 완료 응답의 메모리 보관 시간. 기본값 300, 최대 900. `0`이면 완료 응답을 보관하지 않음 |
+
+키를 `api.baze.co`에서 발급했다면 `BAZE_BASE_URL=https://api.baze.co/v1/gateway`를 명시합니다. 키는 발급한 배포에서만 동작합니다. 이번에 검증한 모델 ID는 `gpt-6.1-terra`입니다. [배포별 설정](https://docs.factchat.kr/agent-setup/prompt.md)
 
 ## 관찰 엔드포인트
 

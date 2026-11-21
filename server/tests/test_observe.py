@@ -120,7 +120,7 @@ def assert_contract(response, sent):
     assert response["observedRevision"] == sent["observation"]["canvasRevision"]
 
 
-@pytest.mark.parametrize("ending", ["complete", "truncated", "length", "tool_call", "invalid_anchor"])
+@pytest.mark.parametrize("ending", ["complete", "null_role", "truncated", "length", "tool_call", "invalid_anchor"])
 async def test_stream_provides_phases_and_only_binds_a_complete_valid_draft(ending, caplog):
     payload = observation(ink="2+2=5")
     value = draft()
@@ -139,6 +139,10 @@ async def test_stream_provides_phases_and_only_binds_a_complete_valid_draft(endi
         if ending == "tool_call":
             frames.append(chunk({"tool_calls": [{"id": PROVIDER_MARKER}]}))
         frames.append(chunk({}, "length" if ending == "length" else "stop"))
+        if ending == "null_role":
+            # BAZE includes role:null on continuation and terminal deltas.
+            for frame in frames[1:]:
+                frame["choices"][0]["delta"]["role"] = None
         frames.append({"choices": [], "usage": {"prompt_tokens": 300, "completion_tokens": 85, "total_tokens": 385},
                        "billing": {"cost_usd": 0.00053, "deducted_credit": 0.7211, "extra": PROVIDER_MARKER}})
         wire = "".join(f"data: {json.dumps(frame, ensure_ascii=False)}\r\n\r\n" for frame in frames)
@@ -162,7 +166,7 @@ async def test_stream_provides_phases_and_only_binds_a_complete_valid_draft(endi
     assert_contract(reply["response"], payload)
     assert PROVIDER_MARKER not in response.text
     assert "billing" not in reply and PROVIDER_MARKER not in caplog.text
-    if ending == "complete":
+    if ending in ("complete", "null_role"):
         assert reply["response"]["actions"][0]["content"] == value["actions"][0]["content"]
         assert "prompt_tokens=300 completion_tokens=85 total_tokens=385" in caplog.text
         assert "cost_usd=0.00053 deducted_credit=0.7211" in caplog.text

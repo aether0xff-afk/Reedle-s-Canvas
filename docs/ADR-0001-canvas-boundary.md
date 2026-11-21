@@ -26,7 +26,7 @@ JSON Schema는 문서와 기본 형태 검증에 사용한다. 동일 ID 중복,
 ## 예제로 따라가는 관찰 한 번
 
 1. 앱은 같은 노트 안에서 엔티티 UUID를 유지한다. 소유자와 레이어는 엔티티가 속한 배열로 표현한다. 예제에는 학생의 획과 그 획을 대상으로 이전에 배치한 AI 문구가 있다. AI 문구는 자신의 UUID와 버전, 출처를 가진다. [노트 예제](../examples/canvas-snapshot.json)
-2. 앱은 관찰 시점의 노트 revision, 관찰할 월드 영역과 대상 UUID를 고정하고 요청 UUID를 발급한다. 서버는 이를 이미지와 함께 해석하고, 모델의 제안을 v1 응답 스키마에 대조한다. 이미지 전송 형식과 제공 모델은 실제 BAZE 입력을 검증한 뒤 확정한다. [관찰 예제](../examples/observation.json)
+2. 앱은 관찰 시점의 노트 revision, 관찰할 월드 영역과 대상 UUID를 고정하고 요청 UUID를 발급한다. 서버는 이를 이미지와 함께 해석하고, 모델의 제안을 v1 응답 스키마에 대조한다. 실제 BAZE의 `gpt-6.1-terra`에서 PNG·JSON Schema·SSE 입력을 검증했다. [관찰 예제](../examples/observation.json) · [BAZE 연결 검증](baze-verification.md)
 3. 앱은 응답의 노트·요청·revision과 대상을 확인하고 적용한 액션 UUID를 추적한다. 예제의 주석과 질문은 같은 획을 가리킨다. 각 액션은 앱이 위치를 정한 후 새 AI 객체가 된다. `observe_only`와 빈 액션 배열을 받으면 현재 화면을 유지한다. [튜터 응답 예제](../examples/tutor-response.json)
 
 ## 검증 전략과 빌드 경로
@@ -37,15 +37,14 @@ JSON Schema는 문서와 기본 형태 검증에 사용한다. 동일 ID 중복,
 
 ## 검증 대기
 
-2026년 11월 21일 기준 Linear의 23개 항목 중 17개가 완료됐다. GitHub의 Mac에서 최신 소스의 iPad 단위 테스트 71개와 UI 테스트 3개, 서버·평가 테스트 83개가 통과했다. 20페이지 PDF의 원문·학생 필기·튜터 판서 내보내기와 1만 획 페이지 로딩도 이 실행에서 확인했다. WSL에서는 Swift 테스트 61개와 Swift 클라이언트·FastAPI의 HTTP 연동을 검증했다. [iPad 자동 검사 결과](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44908173895)
+2026년 11월 21일 기준 Linear의 23개 항목 중 20개가 완료됐다. GitHub의 Mac에서 iPad 단위 테스트 71개와 UI 테스트 3개, 서버·평가 테스트 83개가 통과했다. 20페이지 PDF의 원문·학생 필기·튜터 판서 내보내기와 1만 획 페이지 로딩도 이 실행에서 확인했다. 이후 BAZE 스트리밍 호환성 수정에 대해 Windows의 서버·평가 검사 84개와 실제 필기 60개를 검증했다. 앱 소스는 변경하지 않았다. WSL에서는 Swift 테스트 61개와 Swift 클라이언트·FastAPI의 HTTP 연동을 검증했다. [iPad 자동 검사 결과](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44908173895) · [실제 모델 평가](evaluation.md)
 
 | 항목 | 확인한 범위 | 남은 검증 |
 | --- | --- | --- |
 | AET-42 | 순차 공개 시점과 HTTP 요청 취소 | 실제 판서 애니메이션의 Pencil 입력 중단과 동작 줄이기 |
 | AET-48 | 모의 공급자를 통한 힌트·수정 응답·복원 | 실제 iPad에서 이어지는 입력·인식·수정 시연 |
 | AET-49 | 계측과 앱 수명주기용 자동 검사 코드 | Pencil·프레임·메모리·배터리·회전·분할 화면의 실행 지표 |
-| AET-33·44·50 | 게이트웨이 검증·스트리밍·평가 도구와 실제 필기 60개 | BAZE 계정의 비전 응답·인식률·오탐률·지연·비용 측정 |
 
-GitHub 연결을 갱신한 뒤 저장소 소유자 권한으로 `codex/canvas-camera` 브랜치를 올려 macOS 자동 검사를 실행했다. 검증한 소스 패키지는 `.build/ReedlesCanvas-Verified.zip`에 있다. BAZE 접속 키는 아직 제공되지 않았으며, 실제 모델 응답을 검증한 뒤 평가 리포트와 임계값을 확정한다. 물리 공개 필기 자료는 회로 기호에 한정되며, 오류 사례가 없어 개입 누락률을 평가하려면 추가 자료가 필요하다. [기기 검증 경로](ipad-device-spike.md#aet-31-검증-결과와-빌드-경로) · [평가 자료와 실측](evaluation.md)
+GitHub 연결을 갱신한 뒤 저장소 소유자 권한으로 `codex/canvas-camera` 브랜치를 올려 macOS 자동 검사를 실행했다. 검증한 앱 소스 패키지는 `.build/ReedlesCanvas-Verified.zip`에 있다. BAZE 키는 Windows 계정 암호화로 저장했고 Codex와 Canvas 서버에서 실제 요청을 확인했다. AET-33·44·50의 연결·인식 품질 기록·평가 작업을 완료했다. 실제 모델은 오탐 2건과 오류 누락 5건이 있어 수동 질문 모드를 권고하며, 운영용 자동 개입 임계값은 확정하지 않았다. 물리 공개 필기 자료는 회로 기호에 한정되며, 오류 사례가 없어 개입 누락률을 평가하려면 추가 자료가 필요하다. [기기 검증 경로](ipad-device-spike.md#aet-31-검증-결과와-빌드-경로) · [평가 자료와 실측](evaluation.md) · [키와 비용 검증](baze-verification.md)
 
 AET-31은 WSL 기기 빌드 실패를 기록하고 원격 macOS 빌드 경로를 선택했다. AET-32의 PencilKit 직렬화와 1,000획 복원, AET-35의 카메라 동작은 이전 버전에서 실기기로 확인했다. AET-38 저장 복구와 AET-45 정책 검증은 자동 검사 결과로 완료했다. [기기 검증 결과](ipad-device-spike.md) · [게이트웨이 검증](tutor-gateway.md)
