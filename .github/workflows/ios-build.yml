@@ -25,18 +25,36 @@ jobs:
         run: uv run --directory server --locked pytest -q
       - name: Test handwriting evaluation
         run: uv run --project server --locked python -m pytest -q evaluation/tests
+      - name: Test sealed live credential bootstrap
+        run: uv run --project server --locked python -m unittest tools.test_live_ipad_bootstrap
 
   ios-build:
     runs-on: macos-latest
     timeout-minutes: 45
+    env:
+      REEDLE_LIVE_TEST: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[live-baze]') && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install XcodeGen
-        run: brew install xcodegen
+      - name: Install build tools
+        run: brew install xcodegen uv
+      - name: Prepare per-run live credential wrapping key
+        if: env.REEDLE_LIVE_TEST == '1'
+        run: uv run --project server --locked python tools/run_live_ipad.py prepare
+      - name: Publish only the public wrapping key
+        if: env.REEDLE_LIVE_TEST == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-live-public-key
+          path: .build/live-ipad/public-key.json
+          retention-days: 1
       - name: Build and run tests on iPad Simulator
         run: |
           xcodebuild -version
-          python3 tools/test_ipad.py
+          if [ "$REEDLE_LIVE_TEST" = '1' ]; then
+            uv run --project server --locked python tools/run_live_ipad.py test
+          else
+            python3 tools/test_ipad.py
+          fi
       - name: Keep iPad test logs and results
         if: always()
         uses: actions/upload-artifact@v4

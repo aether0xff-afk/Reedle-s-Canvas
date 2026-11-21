@@ -37,6 +37,8 @@ def parse_arguments(argv=None):
     parser.add_argument("--team-id", help="Apple signing team for a physical device run")
     parser.add_argument("--only-testing", action="append", default=[],
                         help="XCTest target/class/method to run; repeat to select several")
+    parser.add_argument("--require-live-gateway", action="store_true",
+                        help="fail the native live test if its connection resource is missing")
     args = parser.parse_args(argv)
     if args.physical_device:
         if not args.team_id or not re.fullmatch(r"[A-Z0-9]{10}", args.team_id):
@@ -58,8 +60,14 @@ def xcode_test_args(args, udid, bundle):
         "-destination", f"platform={variant},id={udid}",
         "-derivedDataPath", "DerivedData", "-parallel-testing-enabled", "NO", "-resultBundlePath", str(bundle),
     ]
+    conditions = []
     if physical:
-        command += [f"DEVELOPMENT_TEAM={args.team_id}", "OTHER_SWIFT_FLAGS=$(inherited) -DREEDLE_UI_TEST_SUPPORT"]
+        command += [f"DEVELOPMENT_TEAM={args.team_id}"]
+        conditions.append("REEDLE_UI_TEST_SUPPORT")
+    if args.require_live_gateway:
+        conditions.append("REEDLE_LIVE_GATEWAY_REQUIRED")
+    if conditions:
+        command += ["OTHER_SWIFT_FLAGS=$(inherited) " + " ".join(f"-D{condition}" for condition in conditions)]
     return command + [f"-only-testing:{target}" for target in args.only_testing] + ["test"]
 
 
@@ -71,6 +79,8 @@ def extract_result_reports(bundle):
                                 capture_output=True, text=True, encoding="utf-8", errors="replace")
         if result.returncode == 0:
             (bundle.parent / f"{item}.json").write_text(result.stdout, encoding="utf-8")
+    subprocess.run(["xcrun", "xcresulttool", "export", "attachments", "--path", str(bundle),
+                    "--output-path", str(bundle.parent / "attachments")], capture_output=True)
 
 
 def main():

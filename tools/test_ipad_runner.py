@@ -36,6 +36,14 @@ class IPadRunnerTest(unittest.TestCase):
                 parse_arguments(argv)
             self.assertEqual(error.exception.code, 2)
 
+    def test_requested_live_gateway_is_required_without_losing_device_isolation(self):
+        args = parse_arguments(["--device", self.udid, "--require-live-gateway"])
+        self.assertIn("OTHER_SWIFT_FLAGS=$(inherited) -DREEDLE_LIVE_GATEWAY_REQUIRED",
+                      xcode_test_args(args, self.udid, "/tmp/live.xcresult"))
+        args = parse_arguments(["--physical-device", self.udid, "--team-id", "TESTTEAM01", "--require-live-gateway"])
+        self.assertIn("OTHER_SWIFT_FLAGS=$(inherited) -DREEDLE_UI_TEST_SUPPORT -DREEDLE_LIVE_GATEWAY_REQUIRED",
+                      xcode_test_args(args, self.udid, "/tmp/live-device.xcresult"))
+
 
 if __name__ == "__main__":
     unittest.main()
