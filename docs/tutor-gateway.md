@@ -25,6 +25,6 @@ FastAPI 서버가 iPad의 필기 이미지와 주변 획을 받아 BAZE 비전 �
 - Swift와 SQLite 헤더가 있는 Linux에서 `uv run --project server --locked python tools/test_tutor_round_trip.py`를 실행하면 Swift 클라이언트가 임시 FastAPI 서버에 실제 HTTP 요청을 보낸다. 테스트 비전 응답으로 `2+2=5`에서 `2+2=4`로 이어지는 흐름을 확인한다. 연결 중단, 오프라인, 429와 5xx를 발생시켜도 필기 데이터가 계속 저장되는지 검증한다.
 - Xcode의 `python3 tools/test_ipad.py`는 앱에서 캡처한 PencilKit 기반 PNG가 화면 범위와 크기 제한을 지키는지 확인한다.
 
-2026년 11월 21일 WSL의 Swift 테스트 61개가 통과했다. PDF 저장 검사는 20페이지 각각의 학생 획과 튜터 대상 ID를 원본 노트와 백업에서 다시 읽어 대조한다. PDF 원문과 학생 잉크를 함께 캡처하는 이미지 검사는 Xcode용 회귀 테스트에 추가했으며, 현재 브랜치에서의 실행 결과는 아직 없다.
+2026년 11월 21일 WSL의 Swift 테스트 61개와 GitHub macOS의 iPad 단위 테스트 71개·UI 테스트 3개가 통과했다. PDF 저장 검사는 20페이지 각각의 학생 획과 튜터 대상 ID를 원본 노트와 백업에서 다시 읽어 대조한다. iPad 검사에서는 PDF 원문과 학생 잉크를 함께 캡처하고, 내보낸 20페이지에서 원문·학생 필기·튜터 밑줄·수식을 이미지로 대조했다. 튜터 판서는 화면과 PDF에 같은 Core Graphics 경로와 글리프 배치를 사용한다. [자동 검사 결과](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44908173895)
 
 BAZE는 계정마다 모델과 크레딧 조건이 다르다. 이 연결의 멀티모달 응답 품질, 비용과 지연 시간은 해당 계정의 비전 모델에 실제 요청을 보내 확인해야 한다. [Chat Completions](https://docs.mindlogic.ai/docs/general/api-gateway/reference/chat-completions) · [BAZE 사용량](https://docs.mindlogic.ai/docs/general/api-gateway/reference/usage)

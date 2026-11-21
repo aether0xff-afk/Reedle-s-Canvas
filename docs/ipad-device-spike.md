@@ -55,7 +55,9 @@ AET-32 스파이크에서는 `PKCanvasView.contentSize`를 4,096 × 4,096포인�
 
 2026년 11월 21일 원격 Windows의 WSL2에서 Ubuntu 24.04.4 LTS, Swift 6.4.1과 xtool 1.24.0을 확인했습니다. `swift sdk list`에는 Darwin SDK가 없었습니다. 저장소에서 실행한 `xtool dev build`가 SDK 생성 단계에서 `I/O on closed channel`로 종료됐고, `usbipd list`에 iPad가 나타나지 않았습니다. 이 세션에서는 WSL로 서명해 iPad에 설치하고 다시 실행하는 단계까지 진행하지 못했습니다.
 
-앱 빌드와 iPad 시뮬레이터 자동 검사는 원격 macOS의 Xcode를 사용합니다. 이 경로는 이전 커밋 `2347b3d`를 GitHub Actions의 iPad 시뮬레이터에서 검증했습니다. 현재 작업 브랜치의 시뮬레이터 결과는 아직 없습니다. Windows에서는 WSL로 캔버스의 좌표·저장·튜터 로직을 자동 검사할 수 있습니다. [Xcode 시스템 요구사항](https://developer.apple.com/xcode/system-requirements), [이전 시뮬레이터 실행 로그](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44725421112/job/136251479977)
+앱 빌드와 iPad 시뮬레이터 자동 검사는 GitHub Actions의 macOS에서 실행합니다. 2026년 11월 21일 `codex/canvas-camera`의 소유자 권한으로 올린 커밋 `7905640`이 Xcode 26.6(17F113), iPad mini(A17 Pro) 시뮬레이터에서 단위 테스트 71개와 UI 테스트 3개를 모두 통과했습니다. 이 소스는 로컬 커밋 `9dd3ebf`와 같은 트리입니다. [최신 실행 결과](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44908173895)
+
+이번 실행에서는 페이지를 이동한 뒤의 실행 취소·다시 실행, 원문과 필기를 합친 PDF 캡처, 20페이지 PDF/PNG 내보내기, 회전·백그라운드·재실행을 확인했습니다. 1만 획을 담은 노트에서 7개 영역과 빈 영역을 조회·디코딩·할당하는 측정 구간은 세 번 평균 0.060초였고, 측정한 프로세스 최대 물리 메모리는 평균 약 67.6MB였습니다. 이 수치는 시뮬레이터의 계측 결과입니다. Pencil 지연과 배터리 지표는 실제 기기에서 측정해야 합니다. [테스트 로그와 결과 번들](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44908173895/artifacts/14708254728)
 
 ## AET-32 검증 결과
 
