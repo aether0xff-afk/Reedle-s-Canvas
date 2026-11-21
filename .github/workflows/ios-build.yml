@@ -34,6 +34,7 @@ jobs:
     env:
       REEDLE_LIVE_TEST: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[live-baze]') && '1' || '0' }}
       REEDLE_UNIT_ONLY: ${{ contains(github.event.head_commit.message, '[unit-only]') && '1' || '0' }}
+      REEDLE_LAYOUT_ONLY: ${{ contains(github.event.head_commit.message, '[layout-only]') && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -60,6 +61,8 @@ jobs:
             else
               uv run --project server --locked --python 3.12 python tools/run_live_ipad.py test
             fi
+          elif [ "$REEDLE_LAYOUT_ONLY" = '1' ]; then
+            python3 tools/test_ipad.py --only-testing ReedlesCanvasUITests/CanvasToolbarUITests
           else
             python3 tools/test_ipad.py
           fi

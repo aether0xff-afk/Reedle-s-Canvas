@@ -75,6 +75,7 @@ struct ContentView: View {
                     .disabled(document.loadError != nil || navigation.isUsingPencil)
                 Button("저장") { document.saveNow() }
                     .disabled(document.loadError != nil)
+                    .accessibilityIdentifier("canvas.save")
             }
             .padding(.horizontal)
             .frame(height: 52)
