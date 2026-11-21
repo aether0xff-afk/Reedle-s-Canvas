@@ -68,6 +68,10 @@ final class NotePDFTests: XCTestCase {
             let result = try XCTUnwrap(pdf.page(at: index))
             XCTAssertEqual(result.bounds(for: .mediaBox).size, page.frame.size)
             let image = result.thumbnail(of: page.frame.size, for: .mediaBox)
+            let marks = try reopened.tutorMarksForExport(in: page.frame)
+            let anchors = try restored.strokes(in: page.frame).map(\.bounds)
+            print("PDF page \(index + 1), page \(page.frame), anchors \(anchors), marks \(marks.map(\.frame))")
+            XCTAssertEqual(marks.count, 1, "Missing tutor placement on PDF page \(index + 1)")
             XCTAssertEqual(try visibleColors(in: image), [.green, .red, .blue], "PDF page \(index + 1)")
             if index == 0 {
                 // The marker moves from upper left to upper right after the cropped page rotates 90°.

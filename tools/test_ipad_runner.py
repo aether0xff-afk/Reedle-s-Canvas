@@ -14,6 +14,8 @@ class IPadRunnerTest(unittest.TestCase):
         self.assertIn("iphonesimulator", command)
         self.assertIn(f"platform=iOS Simulator,id={self.udid}", command)
         self.assertFalse(any("REEDLE_UI_TEST_SUPPORT" in arg or "DEVELOPMENT_TEAM=" in arg for arg in command))
+        focused = parse_arguments(["--device", self.udid, "--only-testing", "ReedlesCanvasTests/NotePDFTests"])
+        self.assertIn("-only-testing:ReedlesCanvasTests/NotePDFTests", xcode_test_args(focused, self.udid, "/tmp/focused"))
 
     def test_physical_device_scopes_signing_and_test_data_isolation(self):
         args = parse_arguments(["--physical-device", self.udid, "--team-id", "TESTTEAM01"])

@@ -35,6 +35,8 @@ def parse_arguments(argv=None):
     destination.add_argument("--device", help="UDID of a specific iPad simulator")
     destination.add_argument("--physical-device", help="UDID of an attached, development-enabled iPad")
     parser.add_argument("--team-id", help="Apple signing team for a physical device run")
+    parser.add_argument("--only-testing", action="append", default=[],
+                        help="XCTest target/class/method to run; repeat to select several")
     args = parser.parse_args(argv)
     if args.physical_device:
         if not args.team_id or not re.fullmatch(r"[A-Z0-9]{10}", args.team_id):
@@ -58,7 +60,7 @@ def xcode_test_args(args, udid, bundle):
     ]
     if physical:
         command += [f"DEVELOPMENT_TEAM={args.team_id}", "OTHER_SWIFT_FLAGS=$(inherited) -DREEDLE_UI_TEST_SUPPORT"]
-    return command + ["test"]
+    return command + [f"-only-testing:{target}" for target in args.only_testing] + ["test"]
 
 
 def extract_result_reports(bundle):
