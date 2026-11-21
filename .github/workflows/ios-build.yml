@@ -36,7 +36,7 @@ jobs:
       - name: Build and run tests on iPad Simulator
         run: |
           xcodebuild -version
-          python3 tools/test_ipad.py --only-testing ReedlesCanvasTests/NotePDFTests
+          python3 tools/test_ipad.py
       - name: Keep iPad test logs and results
         if: always()
         uses: actions/upload-artifact@v4

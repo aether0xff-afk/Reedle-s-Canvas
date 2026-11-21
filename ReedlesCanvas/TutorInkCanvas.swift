@@ -116,9 +116,7 @@ struct TutorInkCanvas: View {
 
     private static func line(_ points: [CGPoint], closed: Bool = false) -> Path {
         Path { path in
-            guard let start = points.first else { return }
-            path.move(to: start)
-            path.addLines(Array(points.dropFirst()))
+            path.addLines(points)
             if closed { path.closeSubpath() }
         }
     }
