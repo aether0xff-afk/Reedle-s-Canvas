@@ -1,3 +1,4 @@
+import CoreImage
 import PencilKit
 import UIKit
 import XCTest
@@ -76,7 +77,9 @@ final class TutorLiveGatewayTests: XCTestCase {
         let corrected = try store.strokes(in: viewport)
         XCTAssertEqual(corrected.count, 7)
         XCTAssertFalse(corrected.contains { $0.id == TutorExample.answerID })
-        XCTAssertEqual(Array(corrected.prefix(6)), Array(original.prefix(6)))
+        // A student edit can re-encode PencilKit's archive. Check the unchanged
+        // ink in world coordinates; approval above still requires exact records.
+        try assertSameInk(Array(original.prefix(6)), Array(corrected.prefix(6)))
         let second = try XCTUnwrap(document.captureForTutor(manual: true))
         XCTAssertGreaterThan(second.context.inkRevision, first.context.inkRevision)
         XCTAssertTrue(second.recent.contains { $0.offeredHint == true })
@@ -121,5 +124,44 @@ final class TutorLiveGatewayTests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    @MainActor
+    private func assertSameInk(_ expected: [StoredStroke], _ actual: [StoredStroke],
+                               file: StaticString = #filePath, line: UInt = #line) throws {
+        XCTAssertEqual(actual.map(\.id), expected.map(\.id), file: file, line: line)
+        for (before, after) in zip(expected, actual) {
+            XCTAssertEqual(after.bounds, before.bounds, file: file, line: line)
+            XCTAssertEqual(after.zIndex, before.zIndex, file: file, line: line)
+            let original = try XCTUnwrap(PKDrawing(data: before.data).strokes.first)
+            let restored = try XCTUnwrap(PKDrawing(data: after.data).strokes.first)
+            XCTAssertEqual(restored.ink.inkType, original.ink.inkType, file: file, line: line)
+            let a = CIColor(color: original.ink.color), b = CIColor(color: restored.ink.color)
+            for (x, y) in zip([a.red, a.green, a.blue, a.alpha], [b.red, b.green, b.blue, b.alpha]) {
+                XCTAssertEqual(x, y, accuracy: 0.01, file: file, line: line)
+            }
+            XCTAssertEqual(restored.randomSeed, original.randomSeed, file: file, line: line)
+            XCTAssertEqual(restored.maskedPathRanges, original.maskedPathRanges, file: file, line: line)
+            XCTAssertEqual(restored.path.creationDate.timeIntervalSince(original.path.creationDate), 0,
+                           accuracy: 0.001, file: file, line: line)
+            XCTAssertEqual(restored.path.count, original.path.count, file: file, line: line)
+            for (x, y) in zip([original.transform.a, original.transform.b, original.transform.c, original.transform.d],
+                              [restored.transform.a, restored.transform.b, restored.transform.c, restored.transform.d]) {
+                XCTAssertEqual(x, y, accuracy: 0.000001, file: file, line: line)
+            }
+            for (p, q) in zip(original.path, restored.path) {
+                let x = p.location.applying(original.transform)
+                let y = q.location.applying(restored.transform)
+                XCTAssertEqual(x.x + before.bounds.minX - original.renderBounds.minX,
+                               y.x + after.bounds.minX - restored.renderBounds.minX, accuracy: 0.01, file: file, line: line)
+                XCTAssertEqual(x.y + before.bounds.minY - original.renderBounds.minY,
+                               y.y + after.bounds.minY - restored.renderBounds.minY, accuracy: 0.01, file: file, line: line)
+                for (u, v) in zip([p.size.width, p.size.height, p.force, p.opacity, p.azimuth, p.altitude],
+                                  [q.size.width, q.size.height, q.force, q.opacity, q.azimuth, q.altitude]) {
+                    XCTAssertEqual(u, v, accuracy: 0.01, file: file, line: line)
+                }
+                XCTAssertEqual(p.timeOffset, q.timeOffset, accuracy: 0.001, file: file, line: line)
+            }
+        }
     }
 }

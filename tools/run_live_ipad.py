@@ -88,7 +88,7 @@ def wait_for_credential():
     raise TimeoutError('The sealed test credential was not delivered')
 
 
-def run():
+def run(only_testing=()):
     server=None
     fixture=ROOT/'ReedlesCanvasTests'/'LiveGateway.json'
     logs=ROOT/'.build'/'ipad-tests'
@@ -136,7 +136,8 @@ def run():
             fixture.chmod(0o600)
             print('Live native fixture ready. Provider key is confined to the server child.',flush=True)
             return subprocess.call([sys.executable,str(ROOT/'tools/test_ipad.py'),'--device',udid,
-                                    '--require-live-gateway'],cwd=ROOT)
+                                    '--require-live-gateway']+
+                                   [part for target in only_testing for part in ('--only-testing',target)],cwd=ROOT)
     finally:
         if server is not None:
             server.terminate()
@@ -153,6 +154,7 @@ def run():
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command',choices=['prepare','test'])
+    parser.add_argument('--only-testing',action='append',default=[])
     args=parser.parse_args()
     if args.command=='prepare': prepare()
-    else: raise SystemExit(run())
+    else: raise SystemExit(run(args.only_testing))
