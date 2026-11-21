@@ -19,7 +19,7 @@ final class TutorAnimationTests: XCTestCase {
         XCTAssertEqual(try stage.bluePixels(in: calibration, region: CGRect(x: 12, y: 86, width: 16, height: 8)), 0)
         try await stage.settle()
         XCTAssertEqual(try stage.bluePixels(in: stage.snapshot()), 0)
-        let original = stage.document.worldStrokes()
+        let original = try stage.studentRecords()
         try stage.approve()
         let marks = stage.document.tutorMarks
         XCTAssertEqual(marks.count, 4)
@@ -49,18 +49,18 @@ final class TutorAnimationTests: XCTestCase {
         stage.controls.pencilInUse = false
         try await stage.settle()
         try stage.assertComplete(reference)
-        XCTAssertEqual(stage.document.worldStrokes(), original)
+        XCTAssertEqual(try stage.studentRecords(), original)
         XCTAssertEqual(stage.document.tutorMarks, marks)
 
         let reopened = DrawingDocument(fileURL: stage.noteURL)
         XCTAssertTrue(reopened.updateViewport(stage.viewport, surfaceOrigin: .zero))
         XCTAssertEqual(reopened.tutorMarks, marks)
-        XCTAssertEqual(reopened.worldStrokes(), original)
+        XCTAssertEqual(try XCTUnwrap(reopened.store).strokes(in: stage.viewport), original)
         try stage.document.undoTutor()
         try await stage.settle()
         XCTAssertEqual(try stage.bluePixels(in: stage.snapshot()), 0)
         XCTAssertTrue(stage.document.tutorMarks.isEmpty)
-        XCTAssertEqual(stage.document.worldStrokes(), original)
+        XCTAssertEqual(try stage.studentRecords(), original)
         let afterUndo = DrawingDocument(fileURL: stage.noteURL)
         XCTAssertTrue(afterUndo.updateViewport(stage.viewport, surfaceOrigin: .zero))
         XCTAssertTrue(afterUndo.tutorMarks.isEmpty)
@@ -190,6 +190,10 @@ private final class AnimationStage {
     }
 
     func settle() async throws { try await Task.sleep(for: .milliseconds(120)) }
+
+    func studentRecords() throws -> [StoredStroke] {
+        try XCTUnwrap(document.store).strokes(in: viewport)
+    }
 
     func approve() throws {
         let target = try XCTUnwrap(document.worldStrokes().first?.id)

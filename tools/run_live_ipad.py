@@ -104,12 +104,6 @@ def run():
         openssl('req','-x509','-newkey','rsa:2048','-nodes','-days','1','-config',config,
                 '-keyout',cert_key,'-out',cert)
         cert_key.chmod(0o600)
-        devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','--json']))['devices']
-        udid=test_ipad.ipad_identifier(devices)
-        device=next(d for group in devices.values() for d in group if d['udid']==udid)
-        if device['state']!='Booted': subprocess.run(['xcrun','simctl','boot',udid],check=True)
-        subprocess.run(['xcrun','simctl','bootstatus',udid,'-b'],check=True,timeout=240)
-        subprocess.run(['xcrun','simctl','keychain',udid,'add-root-cert',str(cert)],check=True)
         with socket.socket() as listener:
             listener.bind(('127.0.0.1',0))
             port=listener.getsockname()[1]
@@ -123,13 +117,21 @@ def run():
                 '--port',str(port),'--ssl-certfile',str(cert),'--ssl-keyfile',str(cert_key),'--no-access-log'],
                 cwd=ROOT/'server',env=server_env,stdout=gateway_log,stderr=subprocess.STDOUT)
             del server_env,provider_key
-            deadline=monotonic()+10
+            gateway_started=monotonic()
+            deadline=gateway_started+120
             while True:
                 if server.poll() is not None: raise RuntimeError('Local live gateway exited before tests')
                 with socket.socket() as probe:
                     if probe.connect_ex(('127.0.0.1',port))==0: break
                 if monotonic()>deadline: raise TimeoutError('Local live gateway startup timed out')
                 sleep(.1)
+            print(f'Local HTTPS gateway ready after {monotonic()-gateway_started:.1f}s.',flush=True)
+            devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','--json']))['devices']
+            udid=test_ipad.ipad_identifier(devices)
+            device=next(d for group in devices.values() for d in group if d['udid']==udid)
+            if device['state']!='Booted': subprocess.run(['xcrun','simctl','boot',udid],check=True)
+            subprocess.run(['xcrun','simctl','bootstatus',udid,'-b'],check=True,timeout=240)
+            subprocess.run(['xcrun','simctl','keychain',udid,'add-root-cert',str(cert)],check=True)
             fixture.write_text(json.dumps({'baseURL':f'https://127.0.0.1:{port}','accessToken':token})+'\n',encoding='utf-8')
             fixture.chmod(0o600)
             print('Live native fixture ready. Provider key is confined to the server child.',flush=True)
