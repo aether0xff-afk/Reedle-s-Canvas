@@ -1,0 +1,47 @@
+name: iPad app build
+
+on:
+  push:
+    branches: [main, aet-34-canvas-contracts, codex/aet-32-drawing-round-trip, codex/canvas-camera]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'jsonschema>=4.21,<5'
+      - run: python tools/validate_contracts.py
+      - run: python -m unittest tools.test_ipad_runner
+      - run: python -m pip install 'uv>=0.9,<1'
+      - name: Run the tutor server regression suite
+        run: uv run --directory server --locked pytest -q
+      - name: Test handwriting evaluation
+        run: uv run --project server --locked python -m pytest -q evaluation/tests
+
+  ios-build:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Build and run tests on iPad Simulator
+        run: |
+          xcodebuild -version
+          python3 tools/test_ipad.py
+      - name: Keep iPad test logs and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipad-test-results
+          path: .build/ipad-tests/
+          if-no-files-found: ignore
+          retention-days: 7

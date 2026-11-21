@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "source": "fixture",
+  "gateway_floor": 0.82,
+  "records": [
+    {"case_id":"math-01", "latency_ms":780, "result":{"kind":"math", "transcript":"2+2=4", "confidence":0.87, "targets":[1], "decision":"act", "action_targets":[1]}},
+    {"case_id":"math-02", "latency_ms":1600, "result":{"kind":"math", "transcript":"2+2=5", "confidence":0.94, "targets":[1], "decision":"act", "action_targets":[1]}},
+    {"case_id":"math-03", "latency_ms":1100, "result":{"kind":"math", "transcript":"I read 6×7=42.", "confidence":0.92, "targets":[1], "decision":"observe_only"}},
+    {"case_id":"math-04", "latency_ms":1800, "result":{"kind":"math", "transcript":"3(4+2)=3*6", "confidence":0.81, "targets":[0,1], "decision":"observe_only"}},
+    {"case_id":"chemistry-01", "latency_ms":970, "result":{"kind":"chemistry", "transcript":"H-O-H; 2 lone pairs on O", "confidence":0.97, "targets":[1], "decision":"observe_only"}},
+    {"case_id":"chemistry-02", "latency_ms":1520, "result":{"kind":"chemistry", "transcript":"2 single O-H bonds; oxygen has 1 lone pair", "confidence":0.93, "targets":[1], "decision":"act", "action_targets":[1]}},
+    {"case_id":"chemistry-03", "latency_ms":1030, "result":{"kind":"chemistry", "transcript":"O=O with 2 lone pairs per O", "confidence":0.94, "targets":[1], "decision":"observe_only"}},
+    {"case_id":"chemistry-08", "latency_ms":1470, "result":{"kind":"chemistry", "transcript":"3 C-H single bonds", "confidence":0.84, "targets":[0,1], "decision":"act", "action_targets":[0,1]}},
+    {"case_id":"physics-01", "latency_ms":1210, "result":{"kind":"physics", "transcript":"N up; W down", "confidence":0.95, "targets":[1], "decision":"observe_only"}},
+    {"case_id":"physics-02", "latency_ms":2010, "result":{"kind":"physics", "transcript":"normal force down; weight up", "confidence":0.97, "targets":[1], "decision":"act", "action_targets":[1]}},
+    {"case_id":"physics-07", "latency_ms":1140, "result":{"kind":"physics", "transcript":"N up; only one arrow", "confidence":0.89, "targets":[1], "decision":"act", "action_targets":[1]}},
+    {"case_id":"physics-09", "latency_ms":1840, "result":{"kind":"physics", "transcript":"v-t axes; rising line", "confidence":0.91, "targets":[0], "decision":"observe_only"}}
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/reedle/contracts/observation-v1.schema.json",
+  "title": "Reedle tutor observation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestId", "noteId", "canvasRevision", "focusBounds", "entityIds"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "requestId": { "type": "string", "format": "uuid" },
+    "noteId": { "type": "string", "format": "uuid" },
+    "canvasRevision": { "type": "integer", "minimum": 0 },
+    "focusBounds": { "$ref": "#/$defs/bounds" },
+    "entityIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "format": "uuid" } }
+  },
+  "$defs": {
+    "bounds": {
+      "type": "object", "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number" }, "y": { "type": "number" },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    }
+  }
+}

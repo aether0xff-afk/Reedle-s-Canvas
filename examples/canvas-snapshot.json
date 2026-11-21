@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "noteId": "0bc75c4b-c255-4ff3-b7f5-10035a31c727",
+  "revision": 7,
+  "camera": { "origin": { "x": -120.0, "y": 80.0 }, "scale": 1.5 },
+  "userInk": [
+    {
+      "id": "1ff7397e-35a3-40b3-a716-53c1a2a9256c",
+      "revision": 7,
+      "createdAt": "2026-11-19T14:00:00Z",
+      "bounds": { "x": 110, "y": 150, "width": 80, "height": 25 },
+      "color": "#1A1A1A", "width": 2.5,
+      "points": [
+        { "x": 110, "y": 150, "pressure": 0.4, "timeMs": 0 },
+        { "x": 125, "y": 155, "pressure": 0.6, "timeMs": 14 }
+      ]
+    }
+  ],
+  "aiOverlay": [
+    {
+      "id": "3525ef7f-aef3-48e2-a3f9-c4fd0d2ebbe9",
+      "revision": 6,
+      "targetEntityId": "1ff7397e-35a3-40b3-a716-53c1a2a9256c",
+      "bounds": { "x": 205, "y": 150, "width": 110, "height": 20 },
+      "kind": "text",
+      "content": "계산 과정을 적어 볼래?",
+      "hidden": false,
+      "provenance": {
+        "requestId": "603d72e6-7bde-40bd-aa03-fcf3dd6906ed",
+        "actionId": "93fc47a3-1c2a-4891-873a-33db8cc6ec2c",
+        "model": "fixture-model"
+      }
+    }
+  ]
+}

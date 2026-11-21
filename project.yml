@@ -1,0 +1,51 @@
+name: ReedlesCanvas
+options:
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  ReedlesCanvas:
+    type: application
+    platform: iOS
+    sources:
+      - path: ReedlesCanvas
+    scheme:
+      testTargets:
+        - ReedlesCanvasTests
+        - ReedlesCanvasUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.aether.reedlescanvas
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "2"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIRequiresFullScreen: NO
+        SUPPORTS_MACCATALYST: NO
+  ReedlesCanvasTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: ReedlesCanvasTests
+    dependencies:
+      - target: ReedlesCanvas
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.aether.reedlescanvas.tests
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "2"
+        GENERATE_INFOPLIST_FILE: YES
+  ReedlesCanvasUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: ReedlesCanvasUITests
+    dependencies:
+      - target: ReedlesCanvas
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.aether.reedlescanvas.uitests
+        TEST_TARGET_NAME: ReedlesCanvas
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "2"
+        GENERATE_INFOPLIST_FILE: YES

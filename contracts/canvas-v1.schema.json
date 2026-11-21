@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/reedle/contracts/canvas-v1.schema.json",
+  "title": "Reedle canvas snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "noteId", "revision", "camera", "userInk", "aiOverlay"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "noteId": { "$ref": "#/$defs/uuid" },
+    "revision": { "type": "integer", "minimum": 0 },
+    "camera": {
+      "type": "object", "additionalProperties": false,
+      "required": ["origin", "scale"],
+      "properties": {
+        "origin": { "$ref": "#/$defs/point" },
+        "scale": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "userInk": { "type": "array", "items": { "$ref": "#/$defs/stroke" } },
+    "aiOverlay": { "type": "array", "items": { "$ref": "#/$defs/overlay" } }
+  },
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "point": {
+      "type": "object", "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+    },
+    "bounds": {
+      "type": "object", "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number" }, "y": { "type": "number" },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 }
+      }
+    },
+    "stroke": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "revision", "createdAt", "bounds", "color", "width", "points"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "revision": { "type": "integer", "minimum": 0 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "bounds": { "$ref": "#/$defs/bounds" },
+        "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "points": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["x", "y", "pressure", "timeMs"],
+            "properties": {
+              "x": { "type": "number" }, "y": { "type": "number" },
+              "pressure": { "type": "number", "minimum": 0, "maximum": 1 },
+              "timeMs": { "type": "number", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "overlay": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "revision", "targetEntityId", "bounds", "kind", "content", "hidden", "provenance"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "revision": { "type": "integer", "minimum": 0 },
+        "targetEntityId": { "$ref": "#/$defs/uuid" },
+        "bounds": { "$ref": "#/$defs/bounds" },
+        "kind": { "enum": ["annotation", "text", "shape"] },
+        "content": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "hidden": { "type": "boolean" },
+        "provenance": {
+          "type": "object", "additionalProperties": false,
+          "required": ["requestId", "actionId", "model"],
+          "properties": {
+            "requestId": { "$ref": "#/$defs/uuid" },
+            "actionId": { "$ref": "#/$defs/uuid" },
+            "model": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+*.xcodeproj/
+.build/
+.bsp/
+.swiftpm/
+/xtool/
+DerivedData/
+.DS_Store
