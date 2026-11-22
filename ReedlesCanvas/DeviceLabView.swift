@@ -22,6 +22,7 @@ struct DeviceLabView: View {
     var body: some View {
         VStack(spacing: 6) {
             Text("Reedle 실기기 검증 · 개인 노트와 분리됨").font(.headline)
+            Text("검증 빌드: \(controller.sourceVersion)").font(.caption2)
             Text(controller.status).font(.caption).accessibilityIdentifier("deviceLab.status")
             ViewThatFits {
                 controls
@@ -44,7 +45,7 @@ struct DeviceLabView: View {
             }
         }
         .fileExporter(isPresented: $exporting,
-                      document: DeviceLabJSON(data: controller.reportData ?? Data()),
+                      document: DeviceLabJSONDocument(data: controller.reportData ?? Data()),
                       contentType: .json, defaultFilename: "Reedle-DeviceLab-report") { result in
             if case let .failure(error) = result { controller.status = "내보내기 실패: \(error.localizedDescription)" }
         }
@@ -61,7 +62,7 @@ struct DeviceLabView: View {
     }
 }
 
-private struct DeviceLabJSON: FileDocument {
+private struct DeviceLabJSONDocument: FileDocument {
     static var readableContentTypes: [UTType] { [.json] }
     let data: Data
     init(data: Data) { self.data = data }
@@ -78,6 +79,7 @@ final class DeviceLabController: NSObject, ObservableObject {
     let navigation = CanvasNavigation()
     private let directory: URL
     private let sourceCommit: String
+    var sourceVersion: String { String(sourceCommit.prefix(12)) }
     private var displayLink: CADisplayLink?
     private var startTime = 0.0, lastCallback = 0.0, lastSample = 0.0, plannedSeconds = 90.0
     private var intervals: [Double] = [], batteryLevels: [Double] = []
