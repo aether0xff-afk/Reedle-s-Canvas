@@ -8,8 +8,8 @@ The live regression should write native PencilKit ink into an empty note, invoke
 
 - [x] Reproduce the missing automatic application with the native live regression.
 - [x] Apply current automatic replies and update proposal UI and consent text.
-- [ ] Run the native regression batch and inspect actual output.
-- [ ] Reconcile Linear and verification documentation with the demonstrated behavior.
+- [x] Run the native regression batch and inspect actual output.
+- [x] Reconcile Linear and verification documentation with the demonstrated behavior.
 
 Do not claim physical Pencil latency or battery coverage from the simulator. Do not repeat the 60-image benchmark for this app-side scheduling change.
 
@@ -18,3 +18,5 @@ The red native run 44921024274 completed 74 cases with exactly one failure: auto
 BAZE-served Codex reviewed the patch with its provider credential absent from the child environment and authentication supplied by the encrypted-store helper. The review identified that a local application failure could discard the response after dirty-region acknowledgement. Retain the validated response as a pending proposal before attempting automatic storage, and report a local save error without imposing network backoff. Stale proposals are dismissed.
 
 Review scope ruling: this project has no released automatic-suggestion contract to migrate, and the user's recorded requirement explicitly calls for automatic canvas reactions. Keep the existing default manual mode, document the automatic toggle's behavior in the connection editor, and honor the user's existing authorization rather than adding another permission prompt.
+
+Final run 44922395859 passed 74 native unit and three UI cases with zero failures or skips. The actual assistant scheduled both live BAZE observations; two overlays appeared without approval, no duplicate pending proposal remained, the student changed 5 to 4, and the model followed up with "4가 맞아요.". Exact original records and retained-stroke semantics survived, along with seven restored strokes and two observations. The 18.289-second native case and its actual PNG/JSON evidence were inspected. Artifact SHA-256 19bc7521de4227a3958212ae1855638e9d121260878cc41f4424273a850e58f0 matched, and all 1,626 ZIP members were checked for the provider credential. Runner cleanup and branch packet removal were confirmed. AET-48 is complete under the user's simulator-testing instruction; physical measurements remain AET-49.

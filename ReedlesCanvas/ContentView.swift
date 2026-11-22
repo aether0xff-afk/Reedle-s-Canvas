@@ -30,76 +30,33 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("리들의 캔버스")
-                    .font(.headline)
-                Spacer()
-                Text("\(document.strokeCount)획")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .accessibilityIdentifier(inTutorExample ? "tutor.exampleStrokeCount" : "canvas.strokeCount")
-                HStack(spacing: 0) {
-                    Button(action: document.undo) {
-                        Label("실행 취소", systemImage: "arrow.uturn.backward")
-                            .frame(minWidth: 44, minHeight: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .disabled(!document.canUndo)
-                    Button(action: document.redo) {
-                        Label("다시 실행", systemImage: "arrow.uturn.forward")
-                            .frame(minWidth: 44, minHeight: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .disabled(!document.canRedo)
-                }
-                .labelStyle(.iconOnly)
-                .disabled(document.loadError != nil || navigation.isUsingPencil)
-                Menu("보기") {
-                    Button("현재 위치 기억") { navigation.rememberPosition() }
-                    Button("기억한 위치로") { navigation.returnToPosition() }
-                        .disabled(navigation.bookmark == nil)
-                    Divider()
-                    Button("노트 백업 내보내기", action: prepareBackup)
-                }
-                .disabled(document.loadError != nil || navigation.isUsingPencil)
-                if !inTutorExample {
-                    NoteResourceControls(document: document, navigation: navigation, library: pdfLibrary)
-                        .disabled(document.loadError != nil || navigation.isUsingPencil)
-                    PracticeControls(document: document, navigation: navigation)
-                        .disabled(document.loadError != nil || navigation.isUsingPencil)
-                }
-                TutorControls(document: document, assistant: assistant, panel: $tutorPanel,
-                              inExample: inTutorExample, openExample: openTutorExample,
-                              pencilInUse: navigation.isUsingPencil)
-                    .disabled(document.loadError != nil || navigation.isUsingPencil)
-                Button("저장") { document.saveNow() }
-                    .disabled(document.loadError != nil)
-                    .accessibilityIdentifier("canvas.save")
-            }
-            .padding(.horizontal)
-            .frame(height: 52)
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                CanvasToolbar(document: document, navigation: navigation, assistant: assistant, library: pdfLibrary,
+                              tutorPanel: $tutorPanel, width: geometry.size.width, inTutorExample: inTutorExample,
+                              openTutorExample: openTutorExample, exportBackup: prepareBackup)
 
-            if let loadError = document.loadError {
-                ContentUnavailableView(
-                    "필기를 열 수 없습니다",
-                    systemImage: "exclamationmark.triangle",
-                    description: Text(loadError)
-                )
-            } else {
-                ZStack {
-                    Color.white
-                    NotePDFCanvas(document: document, projection: navigation.projection, library: pdfLibrary)
-                        .allowsHitTesting(false)
-                    if let practice = document.practice.current {
-                        PracticeCanvasCard(card: practice, projection: navigation.projection)
+                if let loadError = document.loadError {
+                    ContentUnavailableView(
+                        "필기를 열 수 없습니다",
+                        systemImage: "exclamationmark.triangle",
+                        description: Text(loadError)
+                    )
+                } else {
+                    ZStack {
+                        Color.white
+                        NotePDFCanvas(document: document, projection: navigation.projection, library: pdfLibrary)
+                            .allowsHitTesting(false)
+                        if let practice = document.practice.current {
+                            PracticeCanvasCard(card: practice, projection: navigation.projection)
+                        }
+                        PencilCanvasView(document: document, navigation: navigation)
+                        TutorInkCanvas(document: document, projection: navigation.projection,
+                                       pencilInUse: navigation.isUsingPencil, reduceMotion: reduceMotion)
+                        tutorNotice
                     }
-                    PencilCanvasView(document: document, navigation: navigation)
-                    TutorInkCanvas(document: document, projection: navigation.projection,
-                                   pencilInUse: navigation.isUsingPencil, reduceMotion: reduceMotion)
-                    tutorNotice
+                    .clipped()
                 }
-                .clipped()
             }
         }
         .alert("저장 실패", isPresented: $document.showSaveError) {

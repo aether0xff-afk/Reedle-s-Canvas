@@ -6,6 +6,7 @@ struct NoteResourceControls: View {
     let document: DrawingDocument
     let navigation: CanvasNavigation
     let library: NotePDFLibrary
+    var compact = false
 
     @State private var showingImporter = false
     @State private var showingResources = false
@@ -22,7 +23,7 @@ struct NoteResourceControls: View {
                     .frame(minWidth: 44, minHeight: 44)
                     .accessibilityLabel("자료 처리 중")
             } else {
-                Menu("자료") {
+                Menu {
                     Button {
                         showingImporter = true
                     } label: {
@@ -38,6 +39,8 @@ struct NoteResourceControls: View {
                     } label: {
                         Label("현재 화면 이미지 내보내기", systemImage: "photo")
                     }
+                } label: {
+                    CanvasMenuLabel(title: "자료", systemImage: "doc.richtext", compact: compact)
                 }
                 .accessibilityIdentifier("resources.menu")
             }

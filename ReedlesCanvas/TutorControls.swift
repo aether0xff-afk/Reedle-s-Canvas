@@ -9,6 +9,7 @@ struct TutorControls: View {
     let inExample: Bool
     let openExample: (() -> Void)?
     let pencilInUse: Bool
+    var compact = false
     @Environment(\.scenePhase) private var scenePhase
     @State private var approval: TutorProposal?
     @State private var errorText: String?
@@ -45,7 +46,7 @@ struct TutorControls: View {
     }
 
     var body: some View {
-        Menu(menuTitle) {
+        Menu {
             if inExample {
                 Button("예제 답변 보기", action: showExampleProposal)
                     .accessibilityIdentifier("tutor.exampleReply")
@@ -88,6 +89,8 @@ struct TutorControls: View {
                 .accessibilityIdentifier("tutor.undo")
             Button("이 노트의 인식 기록", action: showHistory)
             Button("튜터 기록 삭제", role: .destructive) { confirmingErase = true }
+        } label: {
+            CanvasMenuLabel(title: menuTitle, systemImage: "sparkles", compact: compact)
         }
         .accessibilityIdentifier(inExample ? "tutor.exampleMenu" : "tutor.menu")
         .sheet(item: $panel, onDismiss: applyApproval) { panel in

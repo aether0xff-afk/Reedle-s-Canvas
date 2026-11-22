@@ -4,12 +4,13 @@ import SwiftUI
 struct PracticeControls: View {
     @ObservedObject var document: DrawingDocument
     let navigation: CanvasNavigation
+    var compact = false
     @State private var solving = false
     @State private var showingStatistics = false
     @State private var errorText: String?
 
     var body: some View {
-        Menu("연습") {
+        Menu {
             Button("현재 풀이로 새 문제") { start(nil) }
                 .accessibilityIdentifier("practice.new")
             Menu("분야 선택") {
@@ -26,6 +27,8 @@ struct PracticeControls: View {
             .disabled(document.practice.current == nil)
             Button("학습 기록") { showingStatistics = true }
                 .disabled(document.practice.statistics.isEmpty)
+        } label: {
+            CanvasMenuLabel(title: "연습", systemImage: "square.and.pencil", compact: compact)
         }
         .accessibilityIdentifier("practice.menu")
         .sheet(isPresented: $solving) { PracticeAnswerView(document: document) }

@@ -1,10 +1,8 @@
 {
-  "package": "ReedlesCanvas-Verified.zip",
-  "sha256": "64da17ba7022c84c46e80dfb75ef4c0663e5ebcdc7becd111c2aa5e4808eee0a",
-  "source_local_commit": "fb093ea60e10c7baf82369bcf0fbaa5df5a94bc5",
-  "source_remote_commit": "90fa6bc143faf311eea2e6ad2230af469875c91b",
-  "source_tree": "427c7315191767d4e5e0180848dd8ae178ccc947",
-  "run_url": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44920074897",
+  "source_local_commit": "afcd9c847db24977b3c4aaafc2787617a7f1190a",
+  "source_remote_commit": "34a8ebb4c05f9e374191439345a80ed58f4329c7",
+  "source_tree": "bcea66c314a7940d7cf544f834682379ac808bb1",
+  "run_url": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44922395859",
   "xcode": "26.6 (17F113)",
   "simulator": "iPad mini (A17 Pro)",
   "tests": {
@@ -25,61 +23,48 @@
     "app rotation, background and relaunch",
     "progressive native paths and glyphs with controlled frame time",
     "Pencil resume, reduced motion, hide/show, undo and restoration",
-    "actual PencilKit images over native HTTPS/SSE to BAZE, manual proposal approval and corrected follow-up"
+    "native assistant pen-up scheduling, actual BAZE HTTPS/SSE, automatic overlays without approval, student correction, follow-up and restoration"
   ],
   "not_measured": [
-    "physical Apple Pencil latency and battery use",
-    "narrow split-screen toolbar layout",
-    "automatic pen-up proposal application without approval"
+    "physical Apple Pencil latency, device frame rate and battery use",
+    "narrow split-screen toolbar layout (fix awaiting native validation)"
   ],
-  "artifacts": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44920074897/artifacts/14713906975",
-  "gateway_verification": {
-    "source_local_commit": "6f014b72f9ccc54c2c3344f884b138f24a1a9621",
-    "source_remote_commit": "11d638d34e9ef5f2d93fbfe7d902a359b7f89b36",
-    "model": "gpt-6.1-terra",
-    "real_handwriting_cases": 60,
-    "valid_structured_results": 60,
-    "server_tests": 65,
-    "evaluation_tests": 19,
-    "report": "tutor-evaluation/baze-real-60-report.json",
-    "public_report": "https://github.com/aether0xff-afk/Reedle-s-Canvas/blob/11d638d34e9ef5f2d93fbfe7d902a359b7f89b36/docs/evaluation.md",
-    "automatic_intervention_production_threshold_recommended": false,
-    "app_source_changed": false
-  },
+  "artifacts": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44922395859/artifacts/14715091297",
   "linear_progress": {
-    "completed": 21,
+    "completed": 22,
     "total": 23,
     "remaining": [
-      "AET-48",
       "AET-49"
     ]
   },
-  "artifact_sha256": "894ba098ca7c7b2a334c2f7a729ed76fe63122a8bf4067759d0f2b4f8e612dcd",
-  "artifact_members_scanned_for_provider_key": 1508,
+  "artifact_sha256": "19bc7521de4227a3958212ae1855638e9d121260878cc41f4424273a850e58f0",
+  "artifact_members_scanned_for_provider_key": 1626,
   "live_observations": {
     "followUp": "4가 맞아요.",
-    "studentStrokesAfterReopen": 7,
+    "firstTranscript": "2+2=5",
+    "correctedConfidence": 0.99,
+    "automaticWithoutApproval": true,
+    "correctedTranscript": "2+2=4",
     "hint": [
       {
         "type": "draw",
         "content": "circle",
-        "targetID": "D018309E-9172-427C-B854-6ADBAB2E680D"
+        "targetID": "D06719D3-66EE-48F9-9496-4085A3D1E476"
       },
       {
-        "targetID": "D018309E-9172-427C-B854-6ADBAB2E680D",
         "content": "다시 계산해 볼래?",
+        "targetID": "D06719D3-66EE-48F9-9496-4085A3D1E476",
         "type": "askQuestion"
       }
     ],
-    "correctedConfidence": 0.99,
-    "firstTranscript": "2+2=5",
+    "studentStrokesAfterReopen": 7,
     "firstConfidence": 0.99,
-    "correctedTranscript": "2+2=4",
-    "approval": "manual",
-    "automatic_pen_up_application_verified": false,
+    "approval": "automatic",
+    "automatic_pen_up_application_verified": true,
+    "test_duration_seconds": 18.289,
     "provider_latency_ms": [
-      6124,
-      4949
+      6458,
+      4132
     ]
   },
   "paging_metrics": [
@@ -87,41 +72,41 @@
       "name": "Memory Physical",
       "unit": "kB",
       "measurements": [
-        835.584,
-        4161.536,
-        802.816
+        770.048,
+        704.576,
+        753.664
       ],
-      "mean": 1933.312
+      "mean": 742.7626666666666
     },
     {
       "name": "Clock Monotonic Time",
       "unit": "s",
       "measurements": [
-        0.111480517,
-        0.38962283600000003,
-        0.166473735
+        0.092556229,
+        0.108522449,
+        0.13004826900000002
       ],
-      "mean": 0.22252569600000002
+      "mean": 0.110375649
     },
     {
       "name": "CPU Time",
       "unit": "s",
       "measurements": [
-        0.12054713400000001,
-        0.186585629,
-        0.17523022800000002
+        0.11134160900000001,
+        0.12006333400000001,
+        0.13276989
       ],
-      "mean": 0.1607876636666667
+      "mean": 0.12139161100000001
     },
     {
       "name": "Memory Peak Physical",
       "unit": "kB",
       "measurements": [
-        100964.672,
-        105175.36,
-        105945.408
+        99195.136,
+        99899.712,
+        100669.76
       ],
-      "mean": 104028.48
+      "mean": 99921.536
     }
   ],
   "measurement_scope": "iOS Simulator; not physical Pencil, device frame rate or battery",
