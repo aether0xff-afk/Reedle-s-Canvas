@@ -6,3 +6,6 @@
 DerivedData/
 .DS_Store
 /ReedlesCanvasTests/LiveGateway.json
+**/.venv/
+/tools/device_lab/results/
+/tools/device_lab/.uv/

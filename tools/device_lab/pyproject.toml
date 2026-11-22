@@ -1,0 +1,5 @@
+[project]
+name = "reedle-device-lab"
+version = "1.0.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["pymobiledevice3==11.61.2"]
