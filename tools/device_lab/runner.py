@@ -49,10 +49,15 @@ def related_app_identities(result: dict) -> list[dict]:
                 if not isinstance(value, dict): continue
                 name = str(value.get("CFBundleDisplayName", value.get("CFBundleName", "")))
                 if (bundle == LAB_BUNDLE or name in {"ReedleDeviceLab", "ReedlesCanvas"}
-                        or (bundle.startswith("com.apple.") and "playground" in (bundle + name).lower())):
+                        or is_swift_playgrounds(bundle, name)):
                     identities.append({"bundle": bundle, "name": name, "version": value.get("CFBundleShortVersionString")})
         except (ValueError, AttributeError): pass
     return identities
+
+
+def is_swift_playgrounds(bundle: str, name: str) -> bool:
+    return bundle.startswith("com.apple.") and (bundle.lower() == PLAYGROUNDS_BUNDLE.lower()
+        or re.fullmatch(r"(?:Swift[ -]?)?Playgrounds?", name, re.I) is not None)
 
 
 def app_inventory(folder: Path, udid: str) -> list[dict]:
@@ -79,8 +84,7 @@ def select_lab_bundle(identities: list[dict], requested: str | None = None) -> s
 
 def select_playgrounds_bundle(identities: list[dict]) -> str:
     candidates = list(dict.fromkeys(a["bundle"] for a in identities
-                                   if a["bundle"].startswith("com.apple.")
-                                   and "playground" in (a["bundle"] + a["name"]).lower()))
+                                   if is_swift_playgrounds(a["bundle"], a["name"])))
     if len(candidates) != 1:
         raise ValueError("Cannot uniquely identify installed Swift Playgrounds. Inspect app-identities.json; source was not transferred.")
     return candidates[0]

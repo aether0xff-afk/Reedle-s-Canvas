@@ -30,7 +30,9 @@ base Git tree/commit. No base-branch update or force push is used.
   no Reedle/AppModule faulting stack is available. Apple **Image Playground**
   processes are unrelated to Swift Playgrounds and are excluded from triage.
 - Native app UI access also failed to initialize in this session with
-  `Managed execution requires a usable CODEX_CLI_PATH`. No device screen was
+  `Managed execution requires a usable CODEX_CLI_PATH`. An alternative UI
+  inventory was accessible and identified installed iTunes, but launching it
+  stopped with `Computer Use app approval timed out`. No iPad/device screen was
   observed or controlled, and no Pencil action was simulated or claimed.
 
 Raw logs and copied reports are retained only under the ignored local
@@ -65,6 +67,33 @@ crash**. No student storage semantics, AI layer permissions or production camera
 behavior are changed. The optional navigation trace callback is nil in the normal
 app. A final journal phase can narrow a failing boundary, but cannot replace an
 exception/termination stack or prove a root cause.
+
+## Completed software verification
+
+[Mac CI run 44999718604](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44999718604)
+tested the app changes in `05f201611ecbc6b195f5bcad2c3a4ecfe72dab6d` through the
+PR merge ref. All 14 selected native cases passed: 9 camera cases and 5 Device Lab
+cases, with zero failures or skipped cases. The full 90-second workload case
+passed; its test-case wall time was 98.493 seconds, including setup/verification,
+which is **not** the measured workload duration or a physical-device measurement.
+The cases assert 10,000 unchanged stored stroke records, reopened camera equality,
+separate interrupted-run journals/reports, and journal export after reopening.
+Same-process reopening remains distinct from genuine process termination.
+
+The CI contract job also passed: 27 collector/triage cases, 4 iPad-runner cases,
+66 server cases, 19 evaluation cases and 8 bootstrap cases. The later change
+excluding Image Playground from source-transfer app selection is covered by the
+same 27-case local suite. No Swift source changed after the successful native run;
+only Python collection/packaging and this report were refined, so the native
+workload is not rerun for that follow-up.
+
+The laptop checks used Python 3.12.10 / pymobiledevice3 11.61.2. PowerShell parsing
+reported zero errors. The source kit's manifest and nested SwiftPM source identity
+were checked locally, as was the standalone runner import. Packaging metadata now
+labels inherited verification as historical rather than claiming it validates
+the new package. Neither a passing package smoke check nor this CI run is iPad
+acceptance. No physical memory, cadence/FPS, battery or Pencil latency values were
+obtained in this session.
 
 ## Physical scenario results for this session
 

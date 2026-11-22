@@ -190,6 +190,12 @@ class DeviceLabRunnerTests(unittest.TestCase):
                          "com.apple.actual.playgrounds")
         with self.assertRaisesRegex(ValueError, "not transferred"):
             lab.select_playgrounds_bundle([])
+        image = {"bundle": "com.apple.ImagePlayground", "name": "Image Playground"}
+        with self.assertRaises(ValueError): lab.select_playgrounds_bundle([image])
+        apps = {image["bundle"]: {"CFBundleDisplayName": image["name"]},
+                "com.apple.actual.playgrounds": {"CFBundleDisplayName": "Swift Playgrounds"}}
+        identities = lab.related_app_identities({"returncode": 0, "stdout": json.dumps(apps)})
+        self.assertEqual([a["bundle"] for a in identities], ["com.apple.actual.playgrounds"])
 
     def analyze(self, contents):
         with tempfile.TemporaryDirectory() as d:
