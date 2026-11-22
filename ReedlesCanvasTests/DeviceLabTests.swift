@@ -22,9 +22,18 @@ final class DeviceLabTests: XCTestCase {
     }
 
     func testIsolatedNativeWorkloadPersistsAllTenThousandStrokesAndReport() async throws {
+        try await verifyWorkload(seconds: 0.5)
+    }
+
+    func testFullNinetySecondWorkloadSurvivesTheRealCameraStartAndLaterTransitions() async throws {
+        try await verifyWorkload(seconds: 90)
+    }
+
+    private func verifyWorkload(seconds: Double) async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let controller = DeviceLabController(directory: root, sourceCommit: String(repeating: "a", count: 40))
+        defer { controller.stop(reason: "test teardown") }
         try await controller.prepare()
         let document = try XCTUnwrap(controller.document)
         XCTAssertEqual(document.strokeCount, 10_000)
@@ -35,8 +44,8 @@ final class DeviceLabTests: XCTestCase {
         defer { window.isHidden = true; window.rootViewController = nil }
         host.view.layoutIfNeeded()
         try await Task.sleep(for: .milliseconds(200))
-        controller.start(seconds: 0.5)
-        let deadline = Date().addingTimeInterval(10)
+        controller.start(seconds: seconds)
+        let deadline = Date().addingTimeInterval(seconds + 30)
         while controller.running && Date() < deadline { try await Task.sleep(for: .milliseconds(20)) }
         XCTAssertFalse(controller.running)
         let data = try XCTUnwrap(controller.reportData)
@@ -45,6 +54,7 @@ final class DeviceLabTests: XCTestCase {
         let verification = try XCTUnwrap(json["verification"] as? [String: Any])
         XCTAssertEqual(verification["stroke_records_equal"] as? Bool, true)
         XCTAssertEqual(verification["reopened_stroke_count"] as? Int, 10_000)
+        XCTAssertGreaterThanOrEqual(json["duration_seconds"] as? Double ?? 0, seconds)
         XCTAssertGreaterThan(json["applied_navigation_requests"] as? Int ?? 0, 0)
         XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("Results/report.json").path))
         XCTAssertTrue((json["frames"] as? [String: Any])?["sample_count"] as? Int ?? 0 > 0)
@@ -64,6 +74,7 @@ final class DeviceLabTests: XCTestCase {
         report.name = "device-lab-simulator-report"
         report.lifetime = .keepAlways
         add(report)
+        try await Task.sleep(for: .milliseconds(150))
         let image = UIGraphicsImageRenderer(bounds: window.bounds).image { context in
             window.layer.render(in: context.cgContext)
         }

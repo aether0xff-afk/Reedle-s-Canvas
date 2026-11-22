@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from datetime import date
+from unittest.mock import patch
 import zipfile
 
 try:
@@ -105,6 +107,43 @@ class DeviceLabRunnerTests(unittest.TestCase):
         self.assertAlmostEqual(lab.video_latency(100, 103, 240)["latency_ms"], 12.5)
         with self.assertRaises(ValueError): lab.video_latency(103, 100, 240)
         with self.assertRaises(ValueError): lab.video_latency(100, 103, 0)
+
+    def test_crash_selection_is_recent_scoped_and_rejects_unsafe_paths(self):
+        self.assertTrue(hasattr(lab, "select_crash_reports"), "Existing crash reports need a safe collector")
+        listing = ["AppModule-2026-11-22-160000.ips", "Playgrounds-2026-11-21-180000.ips",
+                   "Safari-2026-11-22-160001.ips", "AppModule-2026-10-01-120000.ips",
+                   "../AppModule-2026-11-22.ips", "C:/AppModule-2026-11-22.ips",
+                   "JetsamEvent-2026-11-22-160000.ips"]
+        chosen = lab.select_crash_reports(listing, date(2026, 11, 22))
+        self.assertEqual(set(chosen), {listing[0], listing[1], listing[-1]})
+
+    def test_diagnostics_collects_existing_reports_without_launching_or_deleting(self):
+        self.assertTrue(hasattr(lab, "diagnose"), "Crash diagnostics must not require rerunning the workload")
+        calls = []
+        def fake(args, timeout=30):
+            calls.append(args)
+            stdout = ""
+            if args[:2] == ["crash", "ls"]:
+                stdout = "AppModule-2026-11-22-160000.ips\nSafari-2026-11-22-160000.ips\n"
+            if args[:2] == ["apps", "list"]:
+                stdout = json.dumps({"com.apple.Playgrounds": {"CFBundleName": "Playgrounds"},
+                                     "private.personal.app": {"CFBundleName": "Private"}})
+            if args[:2] == ["crash", "pull"]:
+                folder = Path(args[args.index("--udid") + 2]); folder.mkdir(exist_ok=True)
+                (folder / "AppModule-2026-11-22-160000.ips").write_text('{}')
+            return {"returncode": 0, "stdout": stdout, "stderr": "", "timeout": False}
+        with tempfile.TemporaryDirectory() as d, patch.object(lab, "command", side_effect=fake):
+            result = lab.diagnose(Path(d), "local-test-device", today=date(2026, 11, 22))
+            self.assertEqual(result["crash_reports_copied"], 1)
+            self.assertTrue(result["no_workload_launched"])
+            self.assertNotIn("private.personal.app", (Path(d) / "app-identities.json").read_text())
+        self.assertTrue(all("--erase" not in c and "clear" not in c and "launch" not in c for c in calls))
+
+    def test_failed_source_transfer_is_not_reported_as_ready_to_run(self):
+        self.assertTrue(hasattr(lab, "source_transfer_status"))
+        result = lab.source_transfer_status({"returncode": 1})
+        self.assertFalse(result["source_transfer_succeeded"])
+        self.assertEqual(result["status"], "device_connected_source_not_transferred")
 
 
 if __name__ == "__main__":

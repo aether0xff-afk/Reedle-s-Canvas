@@ -10,7 +10,18 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def build(output: Path) -> dict:
+def write_bundle(output: Path, files: dict[str, bytes], commit: str, kind: str) -> dict:
+    manifest = {'schema_version': 1, 'source_commit': commit, 'tracked_changes_present': False, 'kind': kind,
+                'files': [{'path': n, 'bytes': len(b), 'sha256': hashlib.sha256(b).hexdigest()} for n, b in files.items()]}
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as z:
+        for name, data in files.items(): z.writestr(name, data)
+        z.writestr('manifest.json', json.dumps(manifest, indent=2) + '\n')
+    return {'zip': str(output.resolve()), 'bytes': output.stat().st_size,
+            'sha256': hashlib.sha256(output.read_bytes()).hexdigest(), **manifest}
+
+
+def build(output: Path, diagnostics_only: bool = False) -> dict:
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     dirty = bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT))
     if dirty:
@@ -18,6 +29,12 @@ def build(output: Path) -> dict:
 
     def committed(path: str) -> bytes:
         return subprocess.check_output(['git', 'show', f'{commit}:{path}'], cwd=ROOT)
+
+    if diagnostics_only:
+        files = {name: committed('tools/device_lab/' + name) for name in [
+            'runner.py', 'pyproject.toml', 'uv.lock', 'Start-Reedle-Tests.ps1', 'Diagnose-Crash.cmd']}
+        files['START-HERE.md'] = committed('docs/crash-diagnostics.md')
+        return write_bundle(output, files, commit, 'existing-crash-diagnostics-only')
 
     # Use canonical Git bytes, including on Windows checkouts that convert LF to CRLF.
     sources = subprocess.check_output(['git', 'ls-files', '--', 'ReedlesCanvas'], cwd=ROOT, text=True).splitlines()
@@ -41,20 +58,14 @@ def build(output: Path) -> dict:
              'START-HERE.md': committed('docs/laptop-device-tests.md'),
              'KIT-VERIFICATION.json': committed('evaluation/results/device-lab-2026-11-22.json')}
     for name in ['runner.py', 'pyproject.toml', 'uv.lock', 'Start-Reedle-Tests.ps1', 'Run-Tests.cmd',
-                 'Collect-Results.cmd', 'Import-Results.cmd']:
+                 'Collect-Results.cmd', 'Import-Results.cmd', 'Diagnose-Crash.cmd']:
         files[name] = committed('tools/device_lab/' + name)
-    manifest = {'schema_version': 1, 'source_commit': commit, 'tracked_changes_present': dirty,
-                'files': [{'path': n, 'bytes': len(b), 'sha256': hashlib.sha256(b).hexdigest()} for n, b in files.items()]}
-    output.parent.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as z:
-        for name, data in files.items(): z.writestr(name, data)
-        z.writestr('manifest.json', json.dumps(manifest, indent=2) + '\n')
-    return {'zip': str(output.resolve()), 'bytes': output.stat().st_size,
-            'sha256': hashlib.sha256(output.read_bytes()).hexdigest(), **manifest}
+    return write_bundle(output, files, commit, 'device-lab')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT / '.build/Reedle-Laptop-DeviceLab.zip')
+    parser.add_argument('--diagnostics-only', action='store_true')
     args = parser.parse_args()
-    print(json.dumps(build(args.output), indent=2))
+    print(json.dumps(build(args.output, args.diagnostics_only), indent=2))

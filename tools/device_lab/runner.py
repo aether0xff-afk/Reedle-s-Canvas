@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import hashlib
 import json
 import math
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import subprocess
 import sys
@@ -119,6 +119,70 @@ def video_latency(contact: int, ink: int, fps: float) -> dict:
             "scope": "operator-selected high-speed video frames; not device screen recording"}
 
 
+def select_crash_reports(paths: list[str], today: date | None = None) -> list[str]:
+    today = today or datetime.now(timezone.utc).date()
+    app, memory = [], []
+    for raw in paths:
+        value = raw.strip()
+        path = PurePosixPath(value)
+        if not value or "\\" in value or ":" in value or "\x00" in value or ".." in path.parts:
+            continue
+        name = path.name
+        if not re.search(r"\.(?:ips(?:\.synced)?|crash)$", name, re.I): continue
+        if not re.search(r"Reedle|DeviceLab|AppModule|Playground|JetsamEvent", name, re.I): continue
+        match = re.search(r"\d{4}-\d{2}-\d{2}", name)
+        if not match: continue
+        try: report_date = date.fromisoformat(match.group())
+        except ValueError: continue
+        # Include the adjacent local date because the device may use a different time zone.
+        if abs((today - report_date).days) > 1: continue
+        target = memory if "jetsamevent" in name.lower() else app
+        target.append((name[match.start():], value))
+    return [v for _, v in sorted(set(app), reverse=True)[:6] + sorted(set(memory), reverse=True)[:2]]
+
+
+def source_transfer_status(result: dict) -> dict:
+    success = result.get("returncode") == 0
+    return {"source_transfer_succeeded": success,
+            "status": "source_transferred" if success else "device_connected_source_not_transferred",
+            "next_step": ("On iPad open the source ZIP in Swift Playgrounds Documents."
+                          if success else "USB pairing succeeded, but source copying failed. Copy the included SwiftPM ZIP with Files/iCloud; see START-HERE.md.")}
+
+
+def diagnose(folder: Path, udid: str, today: date | None = None) -> dict:
+    flush = command(["crash", "flush", "--udid", udid], timeout=30)
+    write_json(folder / "crash-flush.json", flush)
+    listing = command(["crash", "ls", "--depth", "3", "--udid", udid], timeout=30)
+    selected = select_crash_reports(listing["stdout"].splitlines(), today) if listing["returncode"] == 0 else []
+    # Keep only related filenames rather than the device's entire report index.
+    write_json(folder / "crash-index.json", {"returncode": listing["returncode"],
+               "stderr": listing["stderr"], "timeout": listing["timeout"], "selected": selected})
+    destination = folder / "crash-reports"
+    destination.mkdir(exist_ok=True)
+    pulls = []
+    for remote in selected:
+        result = command(["crash", "pull", "--udid", udid, str(destination), remote], timeout=30)
+        pulls.append({"remote": remote, **result})
+    write_json(folder / "crash-pulls.json", pulls)
+    apps = command(["apps", "list", "--type", "Any", "--udid", udid])
+    identities = []
+    if apps["returncode"] == 0:
+        try:
+            for bundle, value in json.loads(apps["stdout"]).items():
+                if not isinstance(value, dict): continue
+                name = str(value.get("CFBundleDisplayName", value.get("CFBundleName", "")))
+                if bundle == LAB_BUNDLE or (bundle.startswith("com.apple.") and "playground" in (bundle + name).lower()) or name in {"ReedleDeviceLab", "ReedlesCanvas"}:
+                    identities.append({"bundle": bundle, "name": name, "version": value.get("CFBundleShortVersionString")})
+        except (ValueError, AttributeError): pass
+    write_json(folder / "app-identities.json", {"returncode": apps["returncode"], "related_apps": identities,
+                                               "stderr": apps["stderr"]})
+    count = sum(1 for p in destination.rglob("*") if p.is_file())
+    return {"status": "existing_crash_reports_collected" if count else "crash_reports_not_found_or_unavailable",
+            "no_workload_launched": True, "device_reports_erased": False,
+            "crash_reports_selected": len(selected), "crash_reports_copied": count,
+            "next_step": "Return this ZIP. If no reports were copied, use Show Backtrace in the existing Swift Playgrounds crash panel."}
+
+
 def write_json(path: Path, value):
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
@@ -200,7 +264,7 @@ def collect(args, folder: Path, udid: str) -> dict:
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("mode", choices=["prepare", "collect", "import", "latency", "validate"])
+    p.add_argument("mode", choices=["prepare", "collect", "import", "latency", "validate", "diagnose"])
     p.add_argument("--udid"); p.add_argument("--seconds", type=int, default=90)
     p.add_argument("--output", type=Path, default=Path(__file__).parent / "results")
     p.add_argument("--report", type=Path)
@@ -234,14 +298,16 @@ def main(argv=None) -> int:
             raw = json.loads(info["stdout"])
             summary["device"] = {k: raw.get(k) for k in ("ProductType", "ProductVersion", "BuildVersion", "CPUArchitecture")}
             summary["device"]["identifier_sha256_prefix"] = hashlib.sha256(udid.encode()).hexdigest()[:12]
-            if args.mode == "prepare":
+            if args.mode == "diagnose":
+                summary.update(diagnose(folder, udid))
+            elif args.mode == "prepare":
                 source = Path(__file__).parent / "ReedlesCanvas-DeviceLab.swiftpm.zip"
                 if not source.is_file(): raise ValueError("Device Lab source ZIP missing; use the complete laptop kit.")
                 push = command(["apps", "push", "--documents", "--udid", udid, PLAYGROUNDS_BUNDLE,
                                 str(source), "/ReedleDeviceLab-Source.zip"], timeout=60)
                 write_json(folder / "source-transfer.json", push)
-                summary.update(status="device ready", source_transfer_succeeded=push["returncode"] == 0,
-                               next_step="On iPad open the ZIP in Swift Playgrounds Documents (or copy with Files/iCloud), unzip and run. See START-HERE.md.")
+                summary.update(source_transfer_status(push))
+                if push["returncode"] != 0: exit_code = 2
             else:
                 summary.update(collect(args, folder, udid))
                 for path in sorted((folder / "device-reports").rglob("report.json")):

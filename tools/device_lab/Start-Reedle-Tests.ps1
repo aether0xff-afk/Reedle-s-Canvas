@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Prepare', 'Collect', 'Import', 'Validate')][string]$Mode = 'Prepare',
+    [ValidateSet('Prepare', 'Collect', 'Import', 'Validate', 'Diagnose')][string]$Mode = 'Prepare',
     [ValidateRange(10, 3600)][int]$Seconds = 90,
     [string]$Udid,
     [string]$Report
