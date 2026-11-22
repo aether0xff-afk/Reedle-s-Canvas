@@ -55,6 +55,25 @@ Pencil: 눈에 띄는 지연/끊김 없음 또는 관찰한 증상
 
 실제 측정과 검토가 끝날 때까지 AET-49와 전체 프로젝트를 완료로 표시하지 않습니다. 스크립트 자체가 동작했다는 사실은 실기기 합격 결과가 아닙니다.
 
+## 에이전트가 노트북에 직접 접근하는 경우
+
+에이전트가 환경 조회·수집·분석·패키징·전송을 진행한다. 위 수동 ZIP 전달 절차를
+사용자에게 반복 요청하지 않는다. 현재 [기기 세션 기록](ipad-device-session-2026-11-22.md)은
+라이브 USB 차단과 과거 동기화 로그를 현재 실기기 실행 증거와 구분한다.
+
+Prepare는 설치 목록에서 실제 Swift Playgrounds 번들을 확인한 뒤 Documents 복사를
+시도한다. 전송 성공도 자동 빌드·실행이나 서명된 앱 설치를 뜻하지 않는다.
+Collect는 실제 앱 이름/번들을 조회하며 앱이 여러 개면 `-BundleId`로 정확히 지정한다.
+Playgrounds 호스트 PID를 시험 앱 PID로 대신하지 않는다. DVT PID 조회가 실패해도
+해당 앱의 내부 결과 복사를 별도로 시도하며, 회차별 `report_gradings`를 보존한다.
+
+각 자동 시험은 `Results/Sessions/<run_id>/report.json`과 `diagnostics.jsonl`을 보존한다.
+원래 1만 획·90초/600초 카메라 부하는 그대로이며, 카메라의 일부 경계에서 수행하는
+동기 파일 기록 비용도 콜백 간격 측정에 포함된다. 이 계측 빌드의 수치를 무계측 빌드의
+성능으로 일반화하지 않는다. 진단 기록이나 저장에 실패한 회차는 부분 결과다.
+재실행 후 **결과 내보내기**는 마지막 회차의 디스크 진단 기록도 JSON에 포함한다.
+USB 파일 공유가 불가능해도 마지막으로 남은 카메라 단계를 보존할 수 있다.
+
 도구 기준: [pymobiledevice3 Windows/iOS 연결](https://doronz88.github.io/pymobiledevice3/latest/guides/ios17-tunnels/) · [CLI 출력 규칙](https://doronz88.github.io/pymobiledevice3/latest/guides/machine-readable-output/) · [Apple CADisplayLink](https://developer.apple.com/documentation/quartzcore/cadisplaylink) · [uv 설치](https://docs.astral.sh/uv/getting-started/installation/)
 
 ## 이 묶음 자체의 검증

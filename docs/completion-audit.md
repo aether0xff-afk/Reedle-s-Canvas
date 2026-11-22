@@ -31,3 +31,19 @@
 | AET-53 운영·개인정보 | 튜터 설정·조용히/중지·크기·색·민감도·기록 조회/삭제와 [개인 설치 서명 안내](ipad-device-spike.md) | 사용자 전송 동의·보관 안내·삭제 epoch·백업·갱신 문서화 |
 
 현재 RDP 호스트의 연결된 Apple USB 기기는 0개다. 사용자는 별도 Windows 노트북 옆에 iPad와 Pencil을 보유하고 있고, 그 노트북에서 실행할 ZIP을 이 채팅으로 받기로 했다. [노트북 시험 도구](laptop-device-tests.md)는 iPad의 Swift Playgrounds에서 동일 소스를 실행하고 측정 JSON을 내보내는 경로와 선택적인 USB 진단·수집 경로를 제공한다. 실제 노트북·iPad 결과를 받고 원래 완료 조건에 대조하기 전에는 전체 완료로 표시하지 않는다.
+
+추가 조사: [노트북 직접 기기 세션](ipad-device-session-2026-11-22.md)에서 기존 결과와
+동기화된 Jetsam 20개를 확인했다. 현재 에이전트 실행 환경의 Apple USB 서비스 소켓은
+Windows `10013`으로 거부되어 라이브 기기 상태·충돌 스택·새 계측값은 확보하지 못했다.
+수집기 조기 종료와 진단 기록 누락을 보완했으며, 앱 충돌 원인은 아직 확정하지 않았다.
+**AET-49 In Progress, 22/23 유지.**
+후속 [선택 CI 44999718604](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44999718604)는
+전체 90초 부하를 포함한 네이티브 14개 검사를 통과했다. 실기기 계측과 분리한다.
+
+이후 사용자 첨부 실기기 IPS에서 `start → writeProgress → saveReport →
+NSJSONSerialization`의 메인 스레드 `SIGABRT`가 확인됐다.
+[JSON 기록 충돌 분석과 수정](device-lab-json-crash-2026-11-22.md)은 특정 잘못된 필드의
+미확정 상태와 수정본의 실기기 재검증 조건을 구분한다. AET-49 완료 상태는 변경하지 않는다.
+
+20:56 실기기 화면에서 보호 빌드 c1b4346이 `battery.end_level`의 함수 값을 감지했다.
+배터리 값 추출을 명시적 Double·배열 인덱스 방식으로 교정했으며, 새 실기기 시험은 대기 중이다.

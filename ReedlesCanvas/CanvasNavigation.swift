@@ -16,6 +16,8 @@ final class CanvasNavigation: ObservableObject {
     @Published private(set) var bookmark: CanvasCamera?
     @Published private(set) var isUsingPencil = false
     let projection = CanvasProjection()
+    // Opt-in device-lab tracing; the normal app leaves this nil.
+    var diagnosticEvent: ((String, CanvasCamera) -> Void)?
     private weak var canvas: PKCanvasView?
     private weak var document: DrawingDocument?
     private var window = CanvasWindow()
@@ -107,21 +109,32 @@ final class CanvasNavigation: ObservableObject {
         let viewport = CanvasWindow.viewport(camera: camera, size: canvas.bounds.size)
         var nextWindow = window
         nextWindow.centerIfNeeded(around: viewport)
-        guard document.updateViewport(viewport, surfaceOrigin: nextWindow.origin) else { return }
+        diagnosticEvent?("viewport.begin", camera)
+        guard document.updateViewport(viewport, surfaceOrigin: nextWindow.origin) else {
+            diagnosticEvent?("viewport.rejected", camera)
+            return
+        }
+        diagnosticEvent?("viewport.end", camera)
         window = nextWindow
         hasInitialCamera = true
 
         if canvas.zoomScale != camera.scale {
+            diagnosticEvent?("zoom.begin", camera)
             canvas.setZoomScale(camera.scale, animated: false)
             canvas.layoutIfNeeded()
+            diagnosticEvent?("zoom.end", camera)
         }
         let offset = window.localOffset(for: camera)
         // Leave native pan/pinch gestures alone when they already set this position.
         if abs(offset.x - canvas.contentOffset.x) > 0.0001 || abs(offset.y - canvas.contentOffset.y) > 0.0001 {
+            diagnosticEvent?("offset.begin", camera)
             canvas.setContentOffset(offset, animated: false)
+            diagnosticEvent?("offset.end", camera)
         }
+        diagnosticEvent?("camera.persist.begin", camera)
         document.updateCamera(camera)
         projection.update(camera)
+        diagnosticEvent?("camera.persist.end", camera)
     }
 
     func beginPencilInput(on canvas: PKCanvasView) {

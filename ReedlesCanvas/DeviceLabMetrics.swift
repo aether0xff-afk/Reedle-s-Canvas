@@ -15,14 +15,20 @@ struct DeviceLabFrameStats {
         }
         p50Milliseconds = percentile(0.5)
         p95Milliseconds = percentile(0.95)
-        maximumMilliseconds = valid.last ?? 0
+        maximumMilliseconds = valid.isEmpty ? 0 : valid[valid.count - 1]
     }
 }
 
 enum DeviceLabBattery {
+    static func endpoints(levels: [Double]) -> (start: Double, end: Double) {
+        guard !levels.isEmpty else { return (-1, -1) }
+        return (levels[0], levels[levels.count - 1])
+    }
+
     static func canEstimateDrop(levels: [Double], unplugged: [Bool], seconds: Double) -> Bool {
-        seconds.isFinite && seconds >= 600 && levels.count >= 2 && levels.count == unplugged.count
-            && unplugged.allSatisfy { $0 } && levels.allSatisfy { $0.isFinite && (0...1).contains($0) }
-            && levels.last! <= levels.first!
+        guard seconds.isFinite, seconds >= 600, levels.count >= 2, levels.count == unplugged.count else { return false }
+        return unplugged.allSatisfy({ $0 })
+            && levels.allSatisfy({ $0.isFinite && (0...1).contains($0) })
+            && levels[levels.count - 1] <= levels[0]
     }
 }
