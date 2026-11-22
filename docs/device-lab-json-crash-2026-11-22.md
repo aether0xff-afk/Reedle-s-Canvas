@@ -82,7 +82,23 @@ New native regressions cover booleans versus numeric one, UInt64.max/Int64.min,
 CGFloat camera values, nulls and empty-frame metrics; non-finite values, Date and
 boxed nil produce catchable field-path errors. A report-write regression asserts
 that failure preserves the last report bytes and persists the plain-text error.
-The existing complete 90-second workload must be rerun with the changed writer.
+The complete 90-second workload was rerun with the changed writer in
+[CI 45018193038](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/45018193038).
+Source `c1b4346378119097752bd2d79a1c03326cc0a965` passed all 17 selected native
+cases (8 Device Lab, 9 camera), zero failures/skips, on iPad mini (A17 Pro),
+iPadOS 26.5 Simulator / Xcode 26.6. The 90-second case's total test wall time was
+92.414 seconds, including setup and verification; this is not physical workload
+timing. The Python diagnostic suite passed 28 cases. The first corrective build
+had a type-name collision with the FileDocument export type; that compile error
+was corrected before these successful tests.
+
+The prepared device source is `Reedle-DeviceLab-c1b4346.swiftpm.zip`, 90,018 bytes,
+SHA-256 `d51b40432f99d951bfdc3f3a318c5f8b365048ffbed12f621d698f9b3cd6e785`.
+Its generated build identity matches that source commit. The isolated lab header
+displays the first 12 commit characters so the operator can verify the installed
+source before testing. The user chose to handle source insertion; no source
+transfer or device build/run is claimed. Raw device logs are excluded from this
+package.
 
 Physical acceptance still requires running the corrected source on the same iPad:
 first confirm that the initial report succeeds, then complete the full workload
