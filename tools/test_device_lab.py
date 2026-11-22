@@ -228,6 +228,15 @@ class DeviceLabRunnerTests(unittest.TestCase):
         self.assertTrue(result["stack_available"])
         self.assertEqual(result["symbolicated_frames"], 0)
 
+    def test_last_exception_trace_is_retained_alongside_abort_thread(self):
+        result = self.analyze(json.dumps({"modelCode": "iPad14,8", "faultingThread": 0,
+            "exception": {"type": "EXC_CRASH", "signal": "SIGABRT"},
+            "threads": [{"frames": [{"symbol": "abort"}]}],
+            "lastExceptionBacktrace": [{"symbol": "_writeJSONValue"}, {"symbol": "DeviceLabController.saveReport(_:)"}]}))
+        self.assertEqual(result["product"], "iPad14,8")
+        self.assertEqual(result["faulting_stack"][0]["symbol"], "abort")
+        self.assertEqual(result["last_exception_stack"][0]["symbol"], "_writeJSONValue")
+
     def test_jetsam_largest_process_is_not_app_termination_evidence(self):
         body = {"bug_type": "298", "largestProcess": "AppModule", "memoryStatus": {}, "pageSize": 16384,
                 "processes": [{"name": "AppModule", "rpages": 8000},

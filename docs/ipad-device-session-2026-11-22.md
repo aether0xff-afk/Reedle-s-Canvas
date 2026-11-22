@@ -2,6 +2,12 @@
 
 Status: **blocked physical verification; AET-49 remains In Progress, 22/23 complete.**
 
+Later update: the user supplied a physical Device Lab crash at 20:21 KST.
+Its main-thread exception stack establishes an initial diagnostic JSON writer
+failure. See the [physical JSON crash analysis](device-lab-json-crash-2026-11-22.md)
+for the new evidence, corrective change and pending physical revalidation.
+The earlier no-stack observations below are retained as the investigation history.
+
 ## Source and scope
 
 The work branch is `codex/ipad-device-fixes`, based on `codex/canvas-camera` commit

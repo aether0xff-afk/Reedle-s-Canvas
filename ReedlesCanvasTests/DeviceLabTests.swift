@@ -1,3 +1,4 @@
+import CoreFoundation
 import PencilKit
 import SwiftUI
 import XCTest
@@ -5,6 +6,46 @@ import XCTest
 
 @MainActor
 final class DeviceLabTests: XCTestCase {
+    func testDiagnosticJSONPreservesNumericTypesAndNulls() throws {
+        let data = try DeviceLabJSON.encode([
+            "enabled": true, "one": NSNumber(value: 1), "missing": NSNull(),
+            "camera": ["x": CGFloat(-100_000.25), "scale": CGFloat(0.6)],
+            "samples": [["physical_footprint_bytes": UInt64.max, "battery_level": -1.0]],
+            "signed": Int64.min, "empty_frames": ["sample_count": 0, "p95_ms": 0.0]])
+        let value = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertEqual(value["enabled"] as? Bool, true)
+        let one = try XCTUnwrap(value["one"] as? NSNumber)
+        XCTAssertEqual(one.intValue, 1)
+        XCTAssertNotEqual(CFGetTypeID(one), CFBooleanGetTypeID())
+        XCTAssertTrue(value["missing"] is NSNull)
+        XCTAssertEqual((value["camera"] as? [String: Any])?["x"] as? Double, -100_000.25)
+        XCTAssertTrue(String(decoding: data, as: UTF8.self).contains(String(UInt64.max)))
+        XCTAssertTrue(String(decoding: data, as: UTF8.self).contains(String(Int64.min)))
+    }
+
+    func testInvalidDiagnosticValuesThrowCatchableErrorsWithTheirFieldPaths() throws {
+        let invalidValues: [Any] = [Double.nan, Double.infinity, -Double.infinity, Date(), Optional<Int>.none as Any]
+        for invalid in invalidValues {
+            XCTAssertThrowsError(try DeviceLabJSON.encode(["samples": [["bad": invalid]]])) { error in
+                XCTAssertTrue(error.localizedDescription.contains("$.samples[0].bad"), error.localizedDescription)
+            }
+        }
+    }
+
+    func testInvalidReportPreservesLastReportAndPersistsANonJSONFailureRecord() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let controller = DeviceLabController(directory: root, sourceCommit: String(repeating: "a", count: 40))
+        try controller.saveReport(["completed": false, "sequence": 1])
+        let original = try XCTUnwrap(controller.reportData)
+        XCTAssertThrowsError(try controller.saveReport(["frames": ["p95_ms": Double.nan]]))
+        XCTAssertEqual(controller.reportData, original)
+        XCTAssertEqual(try Data(contentsOf: root.appendingPathComponent("Results/report.json")), original)
+        let message = try String(contentsOf: root.appendingPathComponent("Results/serialization-error.txt"), encoding: .utf8)
+        XCTAssertTrue(message.contains("$.frames.p95_ms"))
+        XCTAssertTrue(message.contains("stage=report"))
+    }
+
     func testFrameMetricsUseObservedIntervalsAndIgnoreInvalidValues() {
         let stats = DeviceLabFrameStats(intervals: [0.01, 0.02, 0.03, .nan, -1, 0])
         XCTAssertEqual(stats.sampleCount, 3)

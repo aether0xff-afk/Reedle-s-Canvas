@@ -39,3 +39,8 @@ Windows `10013`으로 거부되어 라이브 기기 상태·충돌 스택·새 �
 **AET-49 In Progress, 22/23 유지.**
 후속 [선택 CI 44999718604](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44999718604)는
 전체 90초 부하를 포함한 네이티브 14개 검사를 통과했다. 실기기 계측과 분리한다.
+
+이후 사용자 첨부 실기기 IPS에서 `start → writeProgress → saveReport →
+NSJSONSerialization`의 메인 스레드 `SIGABRT`가 확인됐다.
+[JSON 기록 충돌 분석과 수정](device-lab-json-crash-2026-11-22.md)은 특정 잘못된 필드의
+미확정 상태와 수정본의 실기기 재검증 조건을 구분한다. AET-49 완료 상태는 변경하지 않는다.

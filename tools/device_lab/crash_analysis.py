@@ -13,6 +13,18 @@ def _fields(value, names):
     return {key: value[key] for key in names if key in value} if isinstance(value, dict) else {}
 
 
+def _stack(frames, images):
+    frames = frames if isinstance(frames, list) else []
+    result = []
+    for frame in frames[:64]:
+        row = _fields(frame, ("symbol", "symbolLocation", "imageIndex", "imageOffset"))
+        index = row.get("imageIndex")
+        if isinstance(index, int) and not isinstance(index, bool) and 0 <= index < len(images):
+            row["image"] = _fields(images[index], ("name", "uuid", "arch"))
+        if row: result.append(row)
+    return result
+
+
 def analyze_crash(path: Path) -> dict:
     if path.stat().st_size > MAX_CRASH_BYTES:
         raise ValueError("Crash report exceeds the 16 MB analysis limit; original retained.")
@@ -51,7 +63,7 @@ def analyze_crash(path: Path) -> dict:
                   bundle=_fields(body.get("bundleInfo"), ("CFBundleIdentifier", "CFBundleShortVersionString", "CFBundleVersion")),
                   os=_fields(body.get("osVersion"), ("train", "build", "releaseType")),
                   os_version=header.get("os_version"), timestamp=body.get("captureTime", header.get("timestamp")),
-                  product=body.get("product"))
+                  product=body.get("product", body.get("modelCode")))
     if str(result["bug_type"]) == "298" or ("processes" in body and "memoryStatus" in body):
         processes = body.get("processes", [])
         processes = processes if isinstance(processes, list) else []
@@ -71,17 +83,11 @@ def analyze_crash(path: Path) -> dict:
     images = body.get("usedImages", [])
     images = images if isinstance(images, list) else []
     thread = threads[fault] if fault is not None and isinstance(threads[fault], dict) else {}
-    frames = thread.get("frames", [])
-    frames = frames if isinstance(frames, list) else []
-    stack = []
-    for frame in frames[:64]:
-        row = _fields(frame, ("symbol", "symbolLocation", "imageIndex", "imageOffset"))
-        index = row.get("imageIndex")
-        if isinstance(index, int) and not isinstance(index, bool) and 0 <= index < len(images):
-            row["image"] = _fields(images[index], ("name", "uuid", "arch"))
-        if row: stack.append(row)
+    stack = _stack(thread.get("frames", []), images)
+    exception_stack = _stack(body.get("lastExceptionBacktrace", []), images)
     return {**result, "kind": "crash", "parse_status": "parsed" if body.get("exception") or body.get("termination") or threads else "unsupported",
             "exception": _fields(body.get("exception"), ("type", "signal", "subtype", "codes", "message")),
             "termination": _fields(body.get("termination"), ("namespace", "code", "indicator", "byProc")),
             "faulting_thread": fault, "faulting_stack": stack, "stack_available": bool(stack),
+            "last_exception_stack": exception_stack,
             "symbolicated_frames": sum(bool(f.get("symbol")) for f in stack)}

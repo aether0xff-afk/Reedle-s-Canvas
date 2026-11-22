@@ -250,7 +250,7 @@ final class DeviceLabController: NSObject, ObservableObject {
                     report["diagnostic_journal"] = String(decoding: data, as: UTF8.self)
                 }
             }
-            self.reportData = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            self.reportData = try encodeDiagnostics(report, stage: "export")
             return true
         } catch { status = "진단 결과 준비 실패: \(error.localizedDescription)"; return false }
     }
@@ -343,8 +343,8 @@ final class DeviceLabController: NSObject, ObservableObject {
         try saveReport(report)
     }
 
-    private func saveReport(_ report: [String: Any]) throws {
-        let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+    func saveReport(_ report: [String: Any]) throws {
+        let data = try encodeDiagnostics(report, stage: "report")
         try FileManager.default.createDirectory(at: reportURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: reportURL, options: .atomic)
         if let journalURL {
@@ -361,7 +361,7 @@ final class DeviceLabController: NSObject, ObservableObject {
                                     "applied_navigation_requests": appliedNavigationRequests]
         if let camera { entry["camera"] = ["x": camera.origin.x, "y": camera.origin.y, "scale": camera.scale] }
         do {
-            var data = try JSONSerialization.data(withJSONObject: entry, options: [.sortedKeys])
+            var data = try encodeDiagnostics(entry, stage: "journal", prettyPrinted: false)
             data.append(0x0a)
             if !FileManager.default.fileExists(atPath: journalURL.path) {
                 guard FileManager.default.createFile(atPath: journalURL.path, contents: nil) else {
@@ -381,7 +381,19 @@ final class DeviceLabController: NSObject, ObservableObject {
         let camera = try store.metadata().camera
         let state: [String: Any] = ["fingerprint": try fingerprint(), "pid": Int(getpid()), "source_commit": sourceCommit,
                                   "camera_x": camera.origin.x, "camera_y": camera.origin.y, "camera_scale": camera.scale]
-        try JSONSerialization.data(withJSONObject: state).write(to: checkpointURL, options: .atomic)
+        try encodeDiagnostics(state, stage: "checkpoint").write(to: checkpointURL, options: .atomic)
+    }
+
+    private func encodeDiagnostics(_ object: [String: Any], stage: String, prettyPrinted: Bool = true) throws -> Data {
+        do { return try DeviceLabJSON.encode(object, prettyPrinted: prettyPrinted) }
+        catch {
+            // This fallback must not use the JSON writer that just failed.
+            let folder = journalURL?.deletingLastPathComponent() ?? reportURL.deletingLastPathComponent()
+            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let message = "source_commit=\(sourceCommit)\nstage=\(stage)\n\(error.localizedDescription)\n"
+            try? Data(message.utf8).write(to: folder.appendingPathComponent("serialization-error.txt"), options: .atomic)
+            throw error
+        }
     }
 
     private func fingerprint() throws -> String {
