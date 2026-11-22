@@ -115,7 +115,7 @@ timing. The Python diagnostic suite passed 28 cases. The first corrective build
 had a type-name collision with the FileDocument export type; that compile error
 was corrected before these successful tests.
 
-The prepared device source is `Reedle-DeviceLab-c1b4346.swiftpm.zip`, 90,018 bytes,
+The earlier protective-writer source was `Reedle-DeviceLab-c1b4346.swiftpm.zip`, 90,018 bytes,
 SHA-256 `d51b40432f99d951bfdc3f3a318c5f8b365048ffbed12f621d698f9b3cd6e785`.
 Its generated build identity matches that source commit. The isolated lab header
 displays the first 12 commit characters so the operator can verify the installed
@@ -124,8 +124,21 @@ transfer or device build/run is claimed. Raw device logs are excluded from this
 package.
 
 The c1b4346 simulator pass above applies to the protective writer only; its physical
-startup failed as documented above. The follow-up scalar-extraction patch requires
-its own build/tests and a new physical run.
+startup failed as documented above. The scalar-extraction correction is source
+`876517b4a175fadd8aa08e66a81e4da3b59a5eea`. Its
+[CI 45020376235](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/45020376235)
+passed all 19 selected native cases (10 Device Lab, 9 camera), zero failures/skips.
+This includes the exact predicate-function regression, scalar battery endpoint
+serialization, initial one-sample report assertions, and the complete 90-second
+workload. The latter test's wall time was 94.368 seconds including setup and
+verification; it is not an iPad measurement. The contract job also passed. The
+intermediate guard/closure syntax error was fixed before this successful run.
+
+The current device source is `Reedle-DeviceLab-876517b.swiftpm.zip`, 90,213 bytes,
+SHA-256 `0db9308a0eb3e12ca67516ee28ad4444d3aa5b3f6295c586c0b1f634ed019662`.
+The generated source identity was verified against the package manifest; the lab
+header displays `876517b4a175`. The user handles source insertion. This new source
+has not yet been observed running on the physical iPad.
 
 Physical acceptance still requires running the corrected source on the same iPad:
 first confirm that the initial report succeeds, then complete the full workload
