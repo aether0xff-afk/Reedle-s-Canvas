@@ -1,0 +1,48 @@
+{
+  "source_local_commit": "786d75c9abd4d49d95b21f2bd552db4302164fdc",
+  "source_remote_commit": "9cb280e189f9ebc4374f0acb38c72d5a4335e8ed",
+  "source_tree": "fad975a8c92eb681d1dfdb6550480322fdf658a1",
+  "run_url": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44992338253",
+  "native_test_scope": "DeviceLabTests only; app/test sources compiled, actual physical device not executed",
+  "simulator": "iPad mini (A17 Pro), iPadOS 26.5, Xcode 26.6",
+  "tests": {
+    "native_device_lab": 3,
+    "laptop_runner": 13,
+    "ipad_runner": 4,
+    "server": 66,
+    "evaluation": 19,
+    "sealed_bootstrap": 8,
+    "failures": 0,
+    "native_skipped": 0
+  },
+  "native_observed": {
+    "fixture_strokes": 10000,
+    "stored_records_unchanged": true,
+    "applied_navigation_requests": 14,
+    "frame_interval_samples": 19,
+    "workload_frame_interval_samples": 14,
+    "same_process_store_reopen_records_match": true,
+    "same_process_store_reopen_camera_match": true,
+    "different_process_claim": false,
+    "is_simulator": true,
+    "native_screen_inspected": true
+  },
+  "windows_smoke": {
+    "fresh_extracted_path_with_spaces": true,
+    "powershell_5_local_runtime_bootstrap": true,
+    "cmd_entry_validate_exit": 0,
+    "drag_drop_json_import_exit": 0,
+    "simulator_import_rejected_as_physical": true,
+    "missing_usb_recorded_in_result_zip": true,
+    "global_execution_policy_changed": false
+  },
+  "artifact_sha256": "959ea9c48f5a45e2257c585a5a105669a1c2b88e0a56b211a2fe20795188aab6",
+  "artifact_zip_members_scanned": 47,
+  "provider_key_absent": true,
+  "physical_tests_performed": false,
+  "remaining": [
+    "Run the delivered kit on the user's laptop and iPad",
+    "Review actual Pencil, window-management, relaunch and battery evidence",
+    "AET-49 remains In Progress; 22 of 23 issues complete"
+  ]
+}

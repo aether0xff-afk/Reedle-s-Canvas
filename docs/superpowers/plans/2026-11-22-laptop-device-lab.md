@@ -31,23 +31,25 @@
 
 Files: `tools/device_lab/runner.py`, `tools/device_lab/pyproject.toml`, `tools/device_lab/uv.lock`, `tools/test_device_lab.py`.
 
-- [ ] Write offline tests for device ambiguity, failed/empty stream, simulator rejection, charging battery, lab provenance and safe result import.
-- [ ] Observe the missing implementation fail, then implement command execution, JSON/JSONL collection, bounded shutdown, local reports and ZIP manifest.
-- [ ] Verify pinned CLI syntax against the installed package, then run the grouped offline checks.
+- [x] Write offline tests for device ambiguity, failed/empty stream, simulator rejection, charging battery, lab provenance and safe result import.
+- [x] Observe the missing implementation fail, then implement command execution, JSON/JSONL collection, bounded shutdown, local reports and ZIP manifest.
+- [x] Verify pinned CLI syntax against the installed package, then run the grouped offline checks.
 
 ### 2. Isolated iPad workload and metrics
 
 Files: `ReedlesCanvas/DeviceLabMetrics.swift`, `ReedlesCanvas/DeviceLabView.swift`, `ReedlesCanvasTests/DeviceLabTests.swift`, `tools/playgrounds/DeviceLabApp.swift`.
 
-- [ ] Add metrics tests for real interval quantiles, missing battery and interrupted runs; controller check verifies note isolation, 10,000-stroke persistence and report serialization.
-- [ ] Implement the lab using existing DrawingDocument, CanvasNavigation and ContentView. Preserve normal app entry and source authority.
-- [ ] Run one focused Mac native batch; distinguish test coverage from physical measurements.
+- [x] Add metrics tests for real interval quantiles, missing battery and interrupted runs; controller check verifies note isolation, 10,000-stroke persistence and report serialization.
+- [x] Implement the lab using existing DrawingDocument, CanvasNavigation and ContentView. Preserve normal app entry and source authority.
+- [x] Run one focused Mac native batch; distinguish test coverage from physical measurements.
 
 ### 3. Transfer package and handoff
 
 Files: `tools/package_device_lab.py`, `tools/device_lab/Start-Reedle-Tests.ps1`, `tools/device_lab/Run-Tests.cmd`, `docs/laptop-device-tests.md`, `.github/workflows/ios-build.yml`.
 
-- [ ] Bundle locked runner, hash-verified local uv bootstrap, current Swift sources and standalone lab entry.
-- [ ] Verify package CRC, hashes, source completeness, launcher parsing and lack of credentials; exercise no-device and imported-result paths locally.
-- [ ] Review the whole change, commit/publish the branch, and deliver the actual kit with precise one-time setup and result-return steps.
-- [ ] Record AET-49 as awaiting real laptop/iPad evidence, not complete.
+- [x] Bundle locked runner, hash-verified local uv bootstrap, current Swift sources and standalone lab entry.
+- [x] Verify package CRC, hashes, source completeness, launcher parsing and lack of credentials; exercise no-device and imported-result paths locally.
+- [x] Review the whole change, commit/publish the branch, and deliver the actual kit with precise one-time setup and result-return steps.
+- [x] Record AET-49 as awaiting real laptop/iPad evidence, not complete.
+
+Verification: Mac run 44992338253 passed all 3 selected native cases (zero failures/skips) and 13 laptop-runner, 4 iPad-runner, 66 server, 19 evaluation and 8 bootstrap cases. The actual 10,000-stroke output preserved records, applied 14 camera requests and retained 19 callback intervals; simulator flags and same-process reopen flags remain explicit. The native initial screen was inspected. Result ZIP digest matched and all 47 members were scanned for the provider key. Fresh Windows PowerShell/CMD bootstrap, no-device diagnostics and JSON drag/drop import were exercised. Two review findings (unknown intermediate battery sample and missing actual workload evidence) were reproduced and fixed with regressions. The physical iPad run is still pending.

@@ -26,8 +26,10 @@
 
 ## 패키지와 남은 조건
 
-검증한 iPad 앱 소스 패키지 `ReedlesCanvas-Verified.zip`은 Swift 파일 30개와 Package.swift의 현재 소스 일치, ZIP CRC와 공급자 키 부재를 확인했다. SHA-256은 `c68a15c8286412bbad93e73a8f0723f150e76b34c2e605e7bb85bdbd7ec15b35`다. 서명된 설치용 IPA는 아니다.
+검증한 iPad 앱 소스 패키지 `ReedlesCanvas-Verified.zip`은 Swift 파일 30개와 Package.swift의 당시 검증 소스 일치, ZIP CRC와 공급자 키 부재를 확인했다. SHA-256은 `c68a15c8286412bbad93e73a8f0723f150e76b34c2e605e7bb85bdbd7ec15b35`다. 서명된 설치용 IPA는 아니다.
 
 원본 결과 ZIP의 SHA-256은 `648cc6df9a2a6b09eb695a2456c6e49182dc9adee6aad5812f50b9c9f810da05`이며 1,573개 멤버에서 공급자 키 원문이 없음을 확인했다. 런너의 임시 해독키·TLS 키·앱 토큰 정리도 로그로 확인했다.
 
 Linear 완료는 **22/23개**다. AET-49의 실제 Apple Pencil 지연, 기기 프레임·메모리·배터리와 기기 창 관리는 아직 확인하지 않았다. 시뮬레이터 수치로 이를 대체하지 않는다. [전체 완료 조건 대조](completion-audit.md)
+
+후속 [노트북 실기기 시험 묶음](laptop-device-tests.md)은 별도 진입점과 격리된 노트를 사용한다. 새 도구의 [Mac 실행 44992338253](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44992338253)에서 네이티브 3개·노트북 수집기 13개가 통과했다. 위 80개 전체 검사를 다시 실행한 것으로 합산하지 않는다. [도구 검증 기록](../evaluation/results/device-lab-2026-11-22.json)

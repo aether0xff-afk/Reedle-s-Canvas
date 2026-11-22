@@ -14,6 +14,8 @@ Xcode와 iOS Simulator 런타임이 있는 Mac에서 `brew install xcodegen` 후
 
 RDP로 개발 중이면 `python tools/package_playground.py`로 iPad에서 열 수 있는 앱 프로젝트를 만드세요. M1 통합 시험에는 `python tools/package_playground.py --m1-checkpoint --output .build/ReedlesCanvas-M1.zip`을 사용합니다. 이 패키지는 별도 디렉터리에 1만 획을 한 번 생성하며 앱과 같은 편집·저장 코드를 실행합니다. [실기기 검증 절차](docs/ipad-device-spike.md)
 
+iPad가 별도 Windows 노트북에 연결돼 있으면 `python tools/package_device_lab.py`로 노트북 전달용 ZIP을 만듭니다. iPad의 Swift Playgrounds에서 독립된 1만 획 자동 시험을 실행하고 노트북에서 결과 JSON·선택적 USB 성능 로그를 모읍니다. [노트북에서 실기기 시험하기](docs/laptop-device-tests.md)
+
 Linux와 Windows의 WSL에서는 Swift와 `libsqlite3-dev`를 설치한 뒤 `python3 tools/test_core.py`로 카메라, 획 식별, 저장 복구, 튜터 데이터와 배치를 검증합니다. 저장 복구 시험은 미확정 변경을 디스크에 쓰는 보조 프로세스를 강제로 종료한 뒤 마지막 확정 획·카메라·튜터 레이어를 다시 읽습니다. PencilKit UI는 Xcode iPad Simulator에서 실행하며, 실제 Pencil 지연과 프레임률은 기기 계측 대상입니다.
 
 ## 튜터 판서

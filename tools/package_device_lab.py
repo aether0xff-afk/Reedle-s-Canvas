@@ -26,8 +26,10 @@ def build(output: Path) -> dict:
         z.write(ROOT / 'tools/playgrounds/DeviceLabApp.swift', prefix + 'DeviceLabApp.swift')
         z.writestr(prefix + 'DeviceLabBuildInfo.swift', f'enum DeviceLabBuildInfo {{ static let sourceCommit = "{commit}" }}\n')
     files = {'ReedlesCanvas-DeviceLab.swiftpm.zip': app.getvalue(),
-             'START-HERE.md': (ROOT / 'docs/laptop-device-tests.md').read_bytes()}
-    for name in ['runner.py', 'pyproject.toml', 'uv.lock', 'Start-Reedle-Tests.ps1', 'Run-Tests.cmd']:
+             'START-HERE.md': (ROOT / 'docs/laptop-device-tests.md').read_bytes(),
+             'KIT-VERIFICATION.json': (ROOT / 'evaluation/results/device-lab-2026-11-22.json').read_bytes()}
+    for name in ['runner.py', 'pyproject.toml', 'uv.lock', 'Start-Reedle-Tests.ps1', 'Run-Tests.cmd',
+                 'Collect-Results.cmd', 'Import-Results.cmd']:
         files[name] = (ROOT / 'tools/device_lab' / name).read_bytes()
     manifest = {'schema_version': 1, 'source_commit': commit, 'tracked_changes_present': dirty,
                 'files': [{'path': n, 'bytes': len(b), 'sha256': hashlib.sha256(b).hexdigest()} for n, b in files.items()]}

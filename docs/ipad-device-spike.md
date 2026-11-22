@@ -12,6 +12,8 @@ Xcode와 XcodeGen이 설치된 Mac에서 `python3 tools/test_ipad.py`는 iPad Si
 
 ## RDP 접속 노트북에 iPad가 있는 경우
 
+현재 전달 경로는 `python tools/package_device_lab.py`로 만드는 `Reedle-Laptop-DeviceLab.zip`이다. 노트북에서 실행하는 PowerShell/Python 도구와 같은 앱 소스를 포함한 독립된 iPad 시험 프로젝트를 함께 묶는다. 90초 부하, 앱 메모리·콜백 간격, 저장 레코드 대조, 선택적 10분 배터리 시험과 결과 내보내기를 지원한다. Pencil·실제 창 조작의 한 번짜리 확인 절차도 포함한다. [노트북 시험 안내](laptop-device-tests.md)
+
 원격 Windows에서 `python tools/package_playground.py`를 실행하면 `.build/ReedlesCanvas.swiftpm.zip`이 생성된다. ZIP을 노트북으로 복사한 뒤 iCloud Drive 등으로 iPad의 파일 앱에 옮긴다. iPad에서 ZIP을 탭해 압축을 풀고 `ReedlesCanvas.swiftpm`을 Swift Playground로 열어 실행 버튼을 누른다. 앱 화면에서 Apple Pencil로 선을 하나 긋고 저장한다. 실행을 중지한 뒤 **같은 프로젝트**를 다시 실행해서 첫 획을 확인한다. 이후 아래 1,000획 시험을 진행한다. 이 경로는 iPad 자체에서 앱 소스를 빌드한다. WSL의 서명·재설치는 별도 시험이다. [Apple의 iPad용 Swift Playground 안내](https://support.apple.com/guide/playgrounds-ipad/welcome/ipados)
 
 ## iPad를 개발 PC에 직접 연결하는 경우
@@ -85,6 +87,6 @@ AET-32 스파이크에서는 `PKCanvasView.contentSize`를 4,096 × 4,096포인�
 
 2026년 11월 22일 [실행 44983717524](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44983717524)에서 iPad 단위 75개·UI 5개가 실패·건너뜀 없이 통과했다. 로컬 소스 `1ba7e31`과 원격 소스 `4925834`의 트리는 같다. 실제 BAZE의 자동 타원 판서·정정 후 피드백, 320/512pt 배치, 네이티브 빠른 팬·핀치와 저장·재실행 복원을 포함한다. [결과 화면](native-results.md)
 
-검증한 앱 소스 패키지는 `.build/ReedlesCanvas-Verified.zip`이며 SHA-256은 `c68a15c8286412bbad93e73a8f0723f150e76b34c2e605e7bb85bdbd7ec15b35`다. 31개 소스 파일이 현재 앱 소스와 바이트 단위로 같고 ZIP CRC와 공급자 키 부재를 확인했다. 이 파일은 소스 프로젝트이며 서명된 IPA가 아니다.
+당시 검증한 앱 소스 패키지는 `.build/ReedlesCanvas-Verified.zip`이며 SHA-256은 `c68a15c8286412bbad93e73a8f0723f150e76b34c2e605e7bb85bdbd7ec15b35`다. 31개 소스 파일이 검증 커밋 `1ba7e31`의 앱 소스와 바이트 단위로 같고 ZIP CRC와 공급자 키 부재를 확인했다. 이 파일은 소스 프로젝트이며 서명된 IPA가 아니다.
 
-앞의 AET-32·35 사용자 실기기 피드백은 당시 빌드의 기록으로 유지한다. 현재 통합본의 물리 Pencil 지연, 기기 프레임·메모리·배터리와 실제 iPadOS 창 관리 검증은 AET-49에 남아 있다. RDP 개발 PC에는 현재 연결된 Apple USB 기기와 Apple 개발 서명이 없으며, 별도 노트북의 iPad를 자동으로 제어할 연결 경로는 아직 확보하지 못했다.
+앞의 AET-32·35 사용자 실기기 피드백은 당시 빌드의 기록으로 유지한다. 현재 통합본의 물리 Pencil 지연, 기기 프레임·메모리·배터리와 실제 iPadOS 창 관리 검증은 AET-49에 남아 있다. 사용자가 iPad 옆 Windows 노트북에서 실행하기로 했으므로 소스·측정 스크립트를 ZIP으로 전달한다. iPad 자체에서 소스를 실행하는 경로는 이 RDP 호스트의 Apple 개발 서명이나 USB 전달을 요구하지 않는다. 실제 노트북·iPad 결과가 돌아오기 전에는 실기기 측정 완료로 표시하지 않는다.
