@@ -120,6 +120,20 @@ def assert_contract(response, sent):
     assert response["observedRevision"] == sent["observation"]["canvasRevision"]
 
 
+async def test_default_gateway_uses_the_verified_baze_deployment(monkeypatch):
+    monkeypatch.delenv("BAZE_BASE_URL")
+    destinations = []
+
+    def provider(request):
+        destinations.append(str(request.url))
+        return completion(draft())
+
+    async with client(provider) as gateway:
+        response = await gateway.post(PATH, json=observation(), headers=AUTH)
+    assert response.status_code == 200
+    assert destinations == ["https://api.baze.co/v1/gateway/chat/completions/"]
+
+
 @pytest.mark.parametrize("ending", ["complete", "null_role", "truncated", "length", "tool_call", "invalid_anchor"])
 async def test_stream_provides_phases_and_only_binds_a_complete_valid_draft(ending, caplog):
     payload = observation(ink="2+2=5")

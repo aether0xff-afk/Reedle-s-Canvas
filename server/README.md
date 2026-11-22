@@ -20,7 +20,7 @@ uv run --directory server --locked --no-dev uvicorn reedle_server.app:app --host
 | `REEDLE_CLIENT_TOKEN` | 필수. 앱과 서버에서 공유하는 별도 토큰 |
 | `BAZE_API_KEY` | 필수. 서버에서만 사용하는 BAZE API 키 |
 | `BAZE_MODEL` | 필수. 이미지 입력과 JSON Schema 출력이 가능한 모델 ID |
-| `BAZE_BASE_URL` | 기본값 `https://factchat-cloud.mindlogic.ai/v1/gateway`. 서버에서 `/chat/completions/`를 추가 |
+| `BAZE_BASE_URL` | 기본값 `https://api.baze.co/v1/gateway`. 서버에서 `/chat/completions/`를 추가 |
 | `REEDLE_BUDGET_DB` | 기본값 `server/.reedle-attempts.sqlite3` (위 실행 명령 기준). 재시작 후에도 유지되는 파일 경로 |
 | `REEDLE_DAILY_ATTEMPT_LIMIT` | UTC 날짜별 BAZE 시도 수. 기본값 100. `0`이면 호출 비활성화 |
 | `REEDLE_PROVIDER_TIMEOUT_SECONDS` | 한 번의 시도 제한 시간. 기본값 7초 |
@@ -28,7 +28,7 @@ uv run --directory server --locked --no-dev uvicorn reedle_server.app:app --host
 | `REEDLE_PROVIDER_MAX_OUTPUT_TOKENS` | BAZE 시도당 출력 상한. 기본값 1,200 |
 | `REEDLE_REPLY_CACHE_SECONDS` | 완료 응답의 메모리 보관 시간. 기본값 300, 최대 900. `0`이면 완료 응답을 보관하지 않음 |
 
-키를 `api.baze.co`에서 발급했다면 `BAZE_BASE_URL=https://api.baze.co/v1/gateway`를 명시합니다. 키는 발급한 배포에서만 동작합니다. 이번에 검증한 모델 ID는 `gpt-6.1-terra`입니다. [배포별 설정](https://docs.factchat.kr/agent-setup/prompt.md)
+기본 주소는 이번에 실제 검증한 `api.baze.co` 배포입니다. 다른 BAZE 배포에서 발급한 키는 해당 배포의 주소를 `BAZE_BASE_URL`로 명시해야 합니다. 키는 발급한 배포에서만 동작합니다. 이번에 검증한 모델 ID는 `gpt-6.1-terra`입니다. [배포별 설정](https://docs.factchat.kr/agent-setup/prompt.md)
 
 ## 관찰 엔드포인트
 

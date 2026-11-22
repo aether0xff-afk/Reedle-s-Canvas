@@ -6,7 +6,7 @@ from pathlib import Path
 import httpx
 
 
-DEFAULT_BAZE_URL = "https://factchat-cloud.mindlogic.ai/v1/gateway"
+DEFAULT_BAZE_URL = "https://api.baze.co/v1/gateway"
 
 
 @dataclass(frozen=True)

@@ -45,6 +45,14 @@ enum TutorPlacement {
         return occupancy.contains { padded.intersects($0) }
     }
 
+    static func circleFrame(around anchor: CGRect) -> CGRect {
+        let factor = CGFloat(2).squareRoot()
+        // Enclose all four corners plus room for the two-point outline.
+        let rx = max(anchor.width / 2 + 11, (anchor.width / 2 + 2) * factor)
+        let ry = max(anchor.height / 2 + 11, (anchor.height / 2 + 2) * factor)
+        return CGRect(x: anchor.midX - rx, y: anchor.midY - ry, width: 2 * rx, height: 2 * ry)
+    }
+
     static func leader(from frame: CGRect, to anchor: CGRect, avoiding occupancy: [CGRect],
                        clearance: CGFloat = 4) -> [CGPoint] {
         let dx = anchor.midX - frame.midX, dy = anchor.midY - frame.midY
@@ -100,7 +108,7 @@ struct TutorMark: Equatable, Identifiable {
             let anchoredFrame: CGRect?
             switch ink {
             case .drawing(.circle):
-                anchoredFrame = anchor.insetBy(dx: -11, dy: -11)
+                anchoredFrame = TutorPlacement.circleFrame(around: anchor)
             case .drawing(.underline):
                 anchoredFrame = CGRect(x: anchor.minX, y: anchor.maxY + 7, width: anchor.width, height: 2)
             default:
@@ -119,11 +127,16 @@ struct TutorMark: Equatable, Identifiable {
             case .drawing: size = CGSize(width: 126, height: 96)
             }
             let arrow = ink == .drawing(.arrow)
-            let obstacles = otherInk + previous
+            let obstacles = otherInk + marks.filter {
+                !(arrow && $0.annotation.action.targetID == action.targetID && $0.ink == .drawing(.circle))
+            }.map(\.frame)
             func leader(for frame: CGRect) -> [CGPoint] {
                 TutorPlacement.leader(from: frame, to: anchor, avoiding: obstacles, clearance: arrow ? 7 : 4)
             }
-            let frame = TutorPlacement.label(size: size, near: anchor, toward: action.intent,
+            let placementAnchor = marks.filter {
+                $0.annotation.action.targetID == action.targetID && $0.ink == .drawing(.circle)
+            }.reduce(anchor) { $0.union($1.frame) }
+            let frame = TutorPlacement.label(size: size, near: placementAnchor, toward: action.intent,
                                              occupancy: studentInk + previous, inside: region) { box in
                 !arrow || !leader(for: box).isEmpty
             }

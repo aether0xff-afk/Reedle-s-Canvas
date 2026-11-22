@@ -359,6 +359,42 @@ final class TutorLayerTests: XCTestCase {
         XCTAssertGreaterThan(label.minX, anchor.maxX)
     }
 
+    func testCircleFrameEnclosesTheWholeAnchorAndClearanceAsAnEllipse() throws {
+        try withNote { store, _, ink in
+            let anchor = CGRect(x: 100, y: 100, width: 280, height: 100)
+            try store.commit(upserts: [StoredStroke(id: ink.id, bounds: anchor, zIndex: ink.zIndex, data: ink.data)])
+            let circle = try XCTUnwrap(proposal(context(try store.metadata())) { response, action in
+                action["type"] = "draw"
+                action["content"] = "circle"
+                action["placementIntent"] = "on_target"
+                response["actions"] = [action,
+                    ["actionId": UUID().uuidString, "type": "draw", "targetEntityId": target.uuidString,
+                     "placementIntent": "near_right", "content": "arrow"],
+                    ["actionId": UUID().uuidString, "type": "ask_question",
+                    "targetEntityId": target.uuidString, "placementIntent": "near_right", "content": "Check the work"]]
+            })
+            XCTAssertTrue(try store.applyTutorProposal(circle))
+            let region = CGRect(x: 0, y: 0, width: 1_000, height: 1_000)
+            let marks = TutorMark.layout(try store.tutorAnnotations(anchoredIn: region),
+                anchors: [target: anchor], in: region) { _ in CGSize(width: 120, height: 32) }
+            XCTAssertEqual(marks.count, 3)
+            let mark = try XCTUnwrap(marks.first)
+            XCTAssertEqual(try XCTUnwrap(marks.first { $0.ink == .drawing(.arrow) }).leader.count, 2)
+            XCTAssertFalse(try XCTUnwrap(marks.last).frame.intersects(mark.frame))
+            let protected = anchor.insetBy(dx: -2, dy: -2)
+            for point in [CGPoint(x: protected.minX, y: protected.minY),
+                          CGPoint(x: protected.maxX, y: protected.minY),
+                          CGPoint(x: protected.minX, y: protected.maxY),
+                          CGPoint(x: protected.maxX, y: protected.maxY)] {
+                let x = (point.x - mark.frame.midX) / (mark.frame.width / 2)
+                let y = (point.y - mark.frame.midY) / (mark.frame.height / 2)
+                XCTAssertLessThanOrEqual(x*x + y*y, 1 + 1e-9,
+                    "A circle must enclose the original rectangle and stroke clearance")
+            }
+            XCTAssertEqual(try store.strokes(in: region).first?.data, ink.data)
+        }
+    }
+
     func testRevealFollowsTheApprovedOrderAndPastMarksStayVisible() throws {
         try withNote { store, _, ink in
             let current = try XCTUnwrap(proposal(context(try store.metadata())) { reply, action in
@@ -390,6 +426,7 @@ final class TutorLayerTests: XCTestCase {
 private enum TutorLayerTestRunner {
     static func main() {
         XCTMain([testCase([
+            ("testCircleFrameEnclosesTheWholeAnchorAndClearanceAsAnEllipse", TutorLayerTests.testCircleFrameEnclosesTheWholeAnchorAndClearanceAsAnEllipse),
             ("testDeclaredAuthorityAndBindingAreEnforcedBeforeApproval", TutorLayerTests.testDeclaredAuthorityAndBindingAreEnforcedBeforeApproval),
             ("testTutorBatchPersistsIsIdempotentAndUndoesWithoutWritingStudentInk", TutorLayerTests.testTutorBatchPersistsIsIdempotentAndUndoesWithoutWritingStudentInk),
             ("testVersionOneNoteMigratesItsSavedDataAndExportsTutorLayers", TutorLayerTests.testVersionOneNoteMigratesItsSavedDataAndExportsTutorLayers),

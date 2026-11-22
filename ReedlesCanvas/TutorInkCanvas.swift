@@ -147,9 +147,7 @@ struct TutorInkCanvas: View {
         switch drawing {
         case .arrow: return Path()
         case .circle:
-            // Rounded bounds enclose the anchor's corners as well as the center of the glyph.
-            let radius = min(11, min(frame.width, frame.height) * 0.25)
-            return Path(roundedRect: frame, cornerRadius: radius)
+            return Path(ellipseIn: frame)
         case .underline: return line([point(0, 0.5), point(1, 0.5)])
         case .triangle: return line([point(0.1, 0.9), point(0.5, 0.12), point(0.9, 0.9)], closed: true)
         case .rectangle: return Path(CGRect(x: frame.minX + frame.width * 0.1, y: frame.minY + frame.height * 0.1,
