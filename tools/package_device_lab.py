@@ -13,24 +13,36 @@ ROOT = Path(__file__).resolve().parents[1]
 def build(output: Path) -> dict:
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     dirty = bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT))
+    if dirty:
+        raise ValueError('Commit tracked source changes before building a versioned device-test kit.')
+
+    def committed(path: str) -> bytes:
+        return subprocess.check_output(['git', 'show', f'{commit}:{path}'], cwd=ROOT)
+
+    # Use canonical Git bytes, including on Windows checkouts that convert LF to CRLF.
+    sources = subprocess.check_output(['git', 'ls-files', '--', 'ReedlesCanvas'], cwd=ROOT, text=True).splitlines()
+    sources = [p for p in sources if p.endswith('.swift') and Path(p).name != 'ReedlesCanvasApp.swift']
+    workspace_sources = {p.relative_to(ROOT).as_posix() for p in (ROOT / 'ReedlesCanvas').rglob('*.swift')
+                         if p.name != 'ReedlesCanvasApp.swift'}
+    if workspace_sources != set(sources):
+        raise ValueError('Untracked Swift sources found; commit them before packaging.')
     app = io.BytesIO()
     with zipfile.ZipFile(app, 'w', zipfile.ZIP_DEFLATED) as z:
         prefix = 'ReedlesCanvas-DeviceLab.swiftpm/'
-        package = (ROOT / 'tools/playgrounds/Package.swift').read_text(encoding='utf-8')
+        package = committed('tools/playgrounds/Package.swift').decode('utf-8')
         package = package.replace('dev.aether.reedlescanvas', 'dev.aether.reedlescanvas.devicelab')
         package = package.replace('name: "ReedlesCanvas"', 'name: "ReedleDeviceLab"')
         z.writestr(prefix + 'Package.swift', package)
-        for p in sorted((ROOT / 'ReedlesCanvas').rglob('*.swift')):
-            if p.name == 'ReedlesCanvasApp.swift': continue
-            z.write(p, prefix + p.relative_to(ROOT / 'ReedlesCanvas').as_posix())
-        z.write(ROOT / 'tools/playgrounds/DeviceLabApp.swift', prefix + 'DeviceLabApp.swift')
+        for source in sorted(sources):
+            z.writestr(prefix + source.removeprefix('ReedlesCanvas/'), committed(source))
+        z.writestr(prefix + 'DeviceLabApp.swift', committed('tools/playgrounds/DeviceLabApp.swift'))
         z.writestr(prefix + 'DeviceLabBuildInfo.swift', f'enum DeviceLabBuildInfo {{ static let sourceCommit = "{commit}" }}\n')
     files = {'ReedlesCanvas-DeviceLab.swiftpm.zip': app.getvalue(),
-             'START-HERE.md': (ROOT / 'docs/laptop-device-tests.md').read_bytes(),
-             'KIT-VERIFICATION.json': (ROOT / 'evaluation/results/device-lab-2026-11-22.json').read_bytes()}
+             'START-HERE.md': committed('docs/laptop-device-tests.md'),
+             'KIT-VERIFICATION.json': committed('evaluation/results/device-lab-2026-11-22.json')}
     for name in ['runner.py', 'pyproject.toml', 'uv.lock', 'Start-Reedle-Tests.ps1', 'Run-Tests.cmd',
                  'Collect-Results.cmd', 'Import-Results.cmd']:
-        files[name] = (ROOT / 'tools/device_lab' / name).read_bytes()
+        files[name] = committed('tools/device_lab/' + name)
     manifest = {'schema_version': 1, 'source_commit': commit, 'tracked_changes_present': dirty,
                 'files': [{'path': n, 'bytes': len(b), 'sha256': hashlib.sha256(b).hexdigest()} for n, b in files.items()]}
     output.parent.mkdir(parents=True, exist_ok=True)
