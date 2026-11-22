@@ -57,6 +57,18 @@ final class DeviceLabTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(json["duration_seconds"] as? Double ?? 0, seconds)
         XCTAssertGreaterThan(json["applied_navigation_requests"] as? Int ?? 0, 0)
         XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent("Results/report.json").path))
+        let runID = try XCTUnwrap(json["run_id"] as? String)
+        let session = root.appendingPathComponent("Results/Sessions/\(runID)")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: session.appendingPathComponent("report.json").path))
+        let journal = try String(contentsOf: session.appendingPathComponent("diagnostics.jsonl"), encoding: .utf8)
+        let phases = try journal.split(separator: "\n").map {
+            try XCTUnwrap((JSONSerialization.jsonObject(with: Data($0.utf8)) as? [String: Any])?["phase"] as? String)
+        }
+        XCTAssertTrue(phases.contains("navigation.begin"))
+        XCTAssertTrue(phases.contains("viewport.end"))
+        XCTAssertTrue(phases.contains("zoom.end"))
+        XCTAssertTrue(phases.contains("camera.persist.end"))
+        XCTAssertEqual(phases.last, "finish.end")
         XCTAssertTrue((json["frames"] as? [String: Any])?["sample_count"] as? Int ?? 0 > 0)
         #if targetEnvironment(simulator)
         XCTAssertEqual((json["environment"] as? [String: Any])?["is_simulator"] as? Bool, true)
@@ -64,12 +76,14 @@ final class DeviceLabTests: XCTestCase {
         let reopened = DeviceLabController(directory: root, sourceCommit: String(repeating: "a", count: 40))
         try await reopened.prepare()
         reopened.saveOperatorCheckpoint()
+        XCTAssertTrue(reopened.prepareExport())
         let reopenedData = try XCTUnwrap(reopened.reportData)
         let reopenedJSON = try XCTUnwrap(JSONSerialization.jsonObject(with: reopenedData) as? [String: Any])
         let validation = try XCTUnwrap(reopenedJSON["relaunch_checkpoint_validation"] as? [String: Any])
         XCTAssertEqual(validation["records_match"] as? Bool, true)
         XCTAssertEqual(validation["camera_matches"] as? Bool, true)
         XCTAssertEqual(validation["different_process"] as? Bool, false)
+        XCTAssertTrue((reopenedJSON["diagnostic_journal"] as? String)?.contains("finish.end") == true)
         let report = XCTAttachment(data: reopenedData, uniformTypeIdentifier: "public.json")
         report.name = "device-lab-simulator-report"
         report.lifetime = .keepAlways
@@ -82,5 +96,25 @@ final class DeviceLabTests: XCTestCase {
         screenshot.name = "device-lab-native-screen"
         screenshot.lifetime = .keepAlways
         add(screenshot)
+    }
+
+    func testInterruptedRunsKeepSeparateReportsAndJournals() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let controller = DeviceLabController(directory: root, sourceCommit: String(repeating: "a", count: 40))
+        try await controller.prepare()
+        for _ in 0..<2 {
+            controller.start(seconds: 600)
+            controller.stop(reason: "operator interruption in test; no workload pass claimed")
+        }
+        let sessions = try FileManager.default.contentsOfDirectory(at: root.appendingPathComponent("Results/Sessions"),
+                                                                  includingPropertiesForKeys: nil)
+        XCTAssertEqual(sessions.count, 2)
+        for session in sessions {
+            let data = try Data(contentsOf: session.appendingPathComponent("report.json"))
+            let report = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+            XCTAssertEqual(report["completed"] as? Bool, false)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: session.appendingPathComponent("diagnostics.jsonl").path))
+        }
     }
 }

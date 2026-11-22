@@ -10,14 +10,109 @@ import math
 import os
 from pathlib import Path, PurePosixPath
 import re
+import socket
+import shutil
 import subprocess
 import sys
 import time
 import zipfile
 
+try:
+    from .crash_analysis import RELATED_PROCESS, analyze_crash
+except ImportError:  # Copied standalone laptop kit.
+    from crash_analysis import RELATED_PROCESS, analyze_crash
+
 LAB_BUNDLE = "dev.aether.reedlescanvas.devicelab"
 PLAYGROUNDS_BUNDLE = "com.apple.Playgrounds"
 MAX_REPORT_BYTES = 2_000_000
+
+
+def usb_transport_probe() -> dict:
+    """Distinguish a blocked Windows transport from an unpaired/locked iPad."""
+    if sys.platform != "win32":
+        return {"status": "not_probed", "scope": "Windows Apple USB service only"}
+    try:
+        with socket.create_connection(("127.0.0.1", 27015), timeout=2):
+            return {"status": "reachable", "scope": "Apple USB service socket only; not device/trust validation"}
+    except OSError as error:
+        code = getattr(error, "winerror", None) or error.errno
+        return {"status": "access_denied" if code in (13, 10013) else "unreachable",
+                "error_code": code, "error_type": type(error).__name__,
+                "scope": "Apple USB service socket; device connection and trust remain unknown"}
+
+
+def related_app_identities(result: dict) -> list[dict]:
+    identities = []
+    if result.get("returncode") == 0:
+        try:
+            for bundle, value in json.loads(result["stdout"]).items():
+                if not isinstance(value, dict): continue
+                name = str(value.get("CFBundleDisplayName", value.get("CFBundleName", "")))
+                if (bundle == LAB_BUNDLE or name in {"ReedleDeviceLab", "ReedlesCanvas"}
+                        or (bundle.startswith("com.apple.") and "playground" in (bundle + name).lower())):
+                    identities.append({"bundle": bundle, "name": name, "version": value.get("CFBundleShortVersionString")})
+        except (ValueError, AttributeError): pass
+    return identities
+
+
+def app_inventory(folder: Path, udid: str) -> list[dict]:
+    result = command(["apps", "list", "--type", "Any", "--udid", udid])
+    identities = related_app_identities(result)
+    # The full private app inventory is never written.
+    write_json(folder / "app-identities.json", {"returncode": result["returncode"],
+               "related_apps": identities, "stderr": result["stderr"], "timeout": result["timeout"]})
+    return identities
+
+
+def select_lab_bundle(identities: list[dict], requested: str | None = None) -> str:
+    if requested:
+        if not re.fullmatch(r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+", requested):
+            raise ValueError("Enter the exact app bundle identifier from app-identities.json.")
+        return requested
+    candidates = list(dict.fromkeys(a["bundle"] for a in identities
+                                   if a["name"] in {"ReedleDeviceLab", "ReedlesCanvas"} or a["bundle"] == LAB_BUNDLE))
+    if len(candidates) > 1:
+        raise ValueError("Multiple canvas apps found; choose the tested app with --bundle-id. No app was selected.")
+    # A Playgrounds preview may be absent from installation_proxy. Record that this is a fallback.
+    return candidates[0] if candidates else LAB_BUNDLE
+
+
+def select_playgrounds_bundle(identities: list[dict]) -> str:
+    candidates = list(dict.fromkeys(a["bundle"] for a in identities
+                                   if a["bundle"].startswith("com.apple.")
+                                   and "playground" in (a["bundle"] + a["name"]).lower()))
+    if len(candidates) != 1:
+        raise ValueError("Cannot uniquely identify installed Swift Playgrounds. Inspect app-identities.json; source was not transferred.")
+    return candidates[0]
+
+
+def collect_synced_crashes(folder: Path, root: Path | None = None, today: date | None = None) -> dict:
+    """Read previously synced Apple reports even when live USB access is denied."""
+    if root is None:
+        appdata = os.environ.get("APPDATA")
+        if not appdata: return {"status": "sync_directory_unavailable", "copied": 0}
+        root = Path(appdata) / "Apple Computer/Logs/CrashReporter/MobileDevice"
+    if not root.is_dir() or root.is_symlink():
+        return {"status": "sync_directory_unavailable", "copied": 0}
+    files = {p.relative_to(root).as_posix(): p for p in root.rglob("*") if p.is_file() and not p.is_symlink()}
+    selected = select_crash_reports(list(files), today)
+    destination = folder / "synced-crash-reports"
+    destination.mkdir(exist_ok=True)
+    analyses = []
+    for remote in selected:
+        source = files[remote]
+        prefix = hashlib.sha256(remote.encode()).hexdigest()[:12]
+        target = destination / (prefix + "-" + source.name)
+        try:
+            analysis = analyze_crash(source)
+            shutil.copyfile(source, target)
+            analyses.append(analysis)
+        except (ValueError, OSError, RecursionError) as error:
+            analyses.append({"file": source.name, "parse_status": "failed", "error_type": type(error).__name__,
+                             "root_cause_confirmed": False})
+    write_json(folder / "synced-crash-analysis.json", analyses)
+    return {"status": "previously_synced_reports_checked", "copied": len(list(destination.iterdir())),
+            "scope": "historical local copies; check timestamp and product before associating with this test"}
 
 
 def select_device(devices: list, requested: str | None = None) -> str:
@@ -129,7 +224,7 @@ def select_crash_reports(paths: list[str], today: date | None = None) -> list[st
             continue
         name = path.name
         if not re.search(r"\.(?:ips(?:\.synced)?|crash)$", name, re.I): continue
-        if not re.search(r"Reedle|DeviceLab|AppModule|Playground|JetsamEvent", name, re.I): continue
+        if not RELATED_PROCESS.search(name) and not name.lower().startswith("jetsamevent-"): continue
         match = re.search(r"\d{4}-\d{2}-\d{2}", name)
         if not match: continue
         try: report_date = date.fromisoformat(match.group())
@@ -146,7 +241,7 @@ def source_transfer_status(result: dict) -> dict:
     return {"source_transfer_succeeded": success,
             "status": "source_transferred" if success else "device_connected_source_not_transferred",
             "next_step": ("On iPad open the source ZIP in Swift Playgrounds Documents."
-                          if success else "USB pairing succeeded, but source copying failed. Copy the included SwiftPM ZIP with Files/iCloud; see START-HERE.md.")}
+                          if success else "USB pairing succeeded, but source copying failed. Inspect source-transfer.json and the verified app identity before choosing a supported delivery route; no source installation is claimed.")}
 
 
 def diagnose(folder: Path, udid: str, today: date | None = None) -> dict:
@@ -164,23 +259,22 @@ def diagnose(folder: Path, udid: str, today: date | None = None) -> dict:
         result = command(["crash", "pull", "--udid", udid, str(destination), remote], timeout=30)
         pulls.append({"remote": remote, **result})
     write_json(folder / "crash-pulls.json", pulls)
-    apps = command(["apps", "list", "--type", "Any", "--udid", udid])
-    identities = []
-    if apps["returncode"] == 0:
-        try:
-            for bundle, value in json.loads(apps["stdout"]).items():
-                if not isinstance(value, dict): continue
-                name = str(value.get("CFBundleDisplayName", value.get("CFBundleName", "")))
-                if bundle == LAB_BUNDLE or (bundle.startswith("com.apple.") and "playground" in (bundle + name).lower()) or name in {"ReedleDeviceLab", "ReedlesCanvas"}:
-                    identities.append({"bundle": bundle, "name": name, "version": value.get("CFBundleShortVersionString")})
-        except (ValueError, AttributeError): pass
-    write_json(folder / "app-identities.json", {"returncode": apps["returncode"], "related_apps": identities,
-                                               "stderr": apps["stderr"]})
-    count = sum(1 for p in destination.rglob("*") if p.is_file())
+    app_inventory(folder, udid)
+    analyses = []
+    reports = [p for p in destination.rglob("*") if p.is_file() and not p.is_symlink()]
+    for report in sorted(reports):
+        try: analyses.append(analyze_crash(report))
+        except (ValueError, OSError, RecursionError) as error:
+            analyses.append({"file": report.name, "parse_status": "failed", "error_type": type(error).__name__,
+                             "root_cause_confirmed": False, "stack_available": False})
+    write_json(folder / "crash-analysis.json", analyses)
+    count = len(reports)
     return {"status": "existing_crash_reports_collected" if count else "crash_reports_not_found_or_unavailable",
             "no_workload_launched": True, "device_reports_erased": False,
             "crash_reports_selected": len(selected), "crash_reports_copied": count,
-            "next_step": "Return this ZIP. If no reports were copied, use Show Backtrace in the existing Swift Playgrounds crash panel."}
+            "reports_with_stacks": sum(a.get("stack_available") is True for a in analyses),
+            "root_cause_confirmed": False,
+            "next_step": "Review local crash-analysis.json and raw reports. If no stack is available, the runtime crash cause remains unconfirmed."}
 
 
 def write_json(path: Path, value):
@@ -241,10 +335,20 @@ def stream(args: list[str], seconds: int, prefix: Path) -> dict:
 
 
 def collect(args, folder: Path, udid: str) -> dict:
-    pid_result = command(["developer", "dvt", "process-id-for-bundle-id", "--udid", udid, LAB_BUNDLE])
+    identities = app_inventory(folder, udid)
+    bundle = select_lab_bundle(identities, getattr(args, "bundle_id", None))
+    selection = {"bundle": bundle, "confirmed_installed": any(a["bundle"] == bundle for a in identities),
+                 "explicit_selection": bool(getattr(args, "bundle_id", None))}
+    write_json(folder / "app-selection.json", selection)
+    # AFC file sharing and DVT have independent availability. Always attempt the lab's reports.
+    pull = command(["apps", "pull", "--documents", "--udid", udid, bundle,
+                    "/ReedleDeviceLab/Results", str(folder / "device-reports")])
+    write_json(folder / "report-pull.json", pull)
+    pid_result = command(["developer", "dvt", "process-id-for-bundle-id", "--udid", udid, bundle])
     write_json(folder / "lab-process.json", pid_result)
     if pid_result["returncode"] != 0 or not re.fullmatch(r"\s*[1-9][0-9]*\s*", pid_result["stdout"]):
-        return {"hardware_telemetry": "unavailable", "reason": "Open and run the Device Lab playground; DVT also requires Developer Mode/DDI support.", "process_query": pid_result}
+        return {"hardware_telemetry": "unavailable", "reason": "No running PID was resolved for the selected bundle; this does not identify a crash cause.",
+                "app_selection": selection, "report_pull_succeeded": pull["returncode"] == 0}
     pid = pid_result["stdout"].strip()
     tasks = {"fps": ["developer", "dvt", "fps", "--udid", udid],
              "process": ["developer", "dvt", "sysmon", "process", "monitor", "process", "--udid", udid,
@@ -253,21 +357,22 @@ def collect(args, folder: Path, udid: str) -> dict:
     with ThreadPoolExecutor(max_workers=2) as pool:
         futures = {k: pool.submit(stream, v, args.seconds, folder / k) for k, v in tasks.items()}
         stats = {k: f.result() for k, f in futures.items()}
-    pull = command(["apps", "pull", "--documents", "--udid", udid, LAB_BUNDLE,
+    pull = command(["apps", "pull", "--documents", "--udid", udid, bundle,
                     "/ReedleDeviceLab/Results", str(folder / "device-reports")])
     write_json(folder / "report-pull.json", pull)
     valid_streams = all(s["samples"] > 0 and s["invalid_lines"] == 0
                         and (s["exit_code"] == 0 or s["stopped_at_time_limit"]) for s in stats.values())
     return {"hardware_telemetry": "recorded" if valid_streams else "partial_or_missing",
-            "streams": stats, "report_pull_succeeded": pull["returncode"] == 0}
+            "streams": stats, "app_selection": selection, "report_pull_succeeded": pull["returncode"] == 0}
 
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("mode", choices=["prepare", "collect", "import", "latency", "validate", "diagnose"])
+    p.add_argument("mode", choices=["prepare", "collect", "import", "latency", "validate", "diagnose", "analyze-crash"])
     p.add_argument("--udid"); p.add_argument("--seconds", type=int, default=90)
     p.add_argument("--output", type=Path, default=Path(__file__).parent / "results")
     p.add_argument("--report", type=Path)
+    p.add_argument("--bundle-id", help="Exact app under test, never inferred from a Playgrounds host PID")
     p.add_argument("--contact-frame", type=int); p.add_argument("--ink-frame", type=int); p.add_argument("--fps", type=float)
     args = p.parse_args(argv)
     if not 10 <= args.seconds <= 3600: p.error("seconds must be 10..3600")
@@ -278,6 +383,12 @@ def main(argv=None) -> int:
     try:
         if args.mode == "validate":
             summary["status"] = "runner ready; no hardware test executed"
+        elif args.mode == "analyze-crash":
+            if args.report is None: raise ValueError("Specify --report with a local .ips or .crash file.")
+            analysis = analyze_crash(args.report)
+            write_json(folder / "crash-analysis.json", analysis)
+            summary.update(status="offline_crash_triage", root_cause_confirmed=False,
+                           stack_available=analysis["stack_available"], no_device_contacted=True)
         elif args.mode == "import":
             if args.report is None: raise ValueError("Specify --report with the exported Device Lab JSON.")
             r = read_report(args.report); write_json(folder / "device-lab.json", r)
@@ -286,10 +397,17 @@ def main(argv=None) -> int:
             if None in (args.contact_frame, args.ink_frame, args.fps): raise ValueError("Specify all video frame arguments.")
             summary.update(status="video annotation", latency=video_latency(args.contact_frame, args.ink_frame, args.fps))
         else:
+            if args.mode == "diagnose":
+                summary["previously_synced_reports"] = collect_synced_crashes(folder)
+            transport = usb_transport_probe()
+            write_json(folder / "usb-transport.json", transport)
+            if transport["status"] == "access_denied":
+                summary.update(status="blocked_host_transport", device_state="unknown", usb_transport=transport)
+                raise ValueError("This execution environment denied the local Apple USB service socket. Unlock/trust cannot fix host access denial; use an execution environment with USB service access. No device state was verified.")
             devices = command(["usbmux", "list", "--usb"])
             if devices["returncode"] != 0:
                 write_json(folder / "discovery-error.json", devices)
-                raise ValueError("USB discovery failed. Install/open Apple Devices and approve Trust on unlocked iPad.")
+                raise ValueError("USB discovery did not complete. Inspect usb-transport.json and discovery-error.json before changing device trust or drivers.")
             udid = select_device(json.loads(devices["stdout"]), args.udid)
             info = command(["lockdown", "info", "--udid", udid])
             if info["returncode"] != 0:
@@ -303,17 +421,24 @@ def main(argv=None) -> int:
             elif args.mode == "prepare":
                 source = Path(__file__).parent / "ReedlesCanvas-DeviceLab.swiftpm.zip"
                 if not source.is_file(): raise ValueError("Device Lab source ZIP missing; use the complete laptop kit.")
-                push = command(["apps", "push", "--documents", "--udid", udid, PLAYGROUNDS_BUNDLE,
+                playgrounds = select_playgrounds_bundle(app_inventory(folder, udid))
+                summary["source_target_bundle"] = playgrounds
+                push = command(["apps", "push", "--documents", "--udid", udid, playgrounds,
                                 str(source), "/ReedleDeviceLab-Source.zip"], timeout=60)
                 write_json(folder / "source-transfer.json", push)
                 summary.update(source_transfer_status(push))
                 if push["returncode"] != 0: exit_code = 2
             else:
                 summary.update(collect(args, folder, udid))
+                summary["report_gradings"] = []
                 for path in sorted((folder / "device-reports").rglob("report.json")):
-                    summary["grading"] = grade_report(read_report(path))
-    except (ValueError, OSError, json.JSONDecodeError) as e:
-        summary.update(status="needs_setup_or_evidence", error=str(e)); exit_code = 2
+                    report = read_report(path)
+                    summary["report_gradings"].append({"path": path.relative_to(folder).as_posix(),
+                        "run_id": report.get("run_id"), "source_commit": report.get("source_commit"),
+                        "grading": grade_report(report)})
+    except (ValueError, OSError, RecursionError) as e:
+        summary.setdefault("status", "needs_setup_or_evidence")
+        summary["error"] = str(e); exit_code = 2
     finally:
         write_json(folder / "summary.json", summary)
         archive = archive_results(folder)

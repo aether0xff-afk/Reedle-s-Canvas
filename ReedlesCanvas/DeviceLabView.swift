@@ -56,7 +56,7 @@ struct DeviceLabView: View {
             Button("10분 배터리 시험") { controller.start(seconds: 600) }.disabled(controller.running || controller.document == nil)
             Button("중지") { controller.stop(reason: "operator stopped") }.disabled(!controller.running)
             Button("필기·복원 기준 저장") { controller.saveOperatorCheckpoint() }.disabled(controller.running || controller.document == nil)
-            Button("결과 내보내기") { exporting = true }.disabled(controller.running || controller.reportData == nil)
+            Button("결과 내보내기") { exporting = controller.prepareExport() }.disabled(controller.running || controller.reportData == nil)
         }.buttonStyle(.bordered).font(.caption)
     }
 }
@@ -90,6 +90,12 @@ final class DeviceLabController: NSObject, ObservableObject {
     private var previousCheckpointMatches: Bool?
     private var previousCameraMatches: Bool?
     private var oldBatteryMonitoring = false
+    private var runID: String?
+    private var journalURL: URL?
+    private var journalError: String?
+    private var tracingNavigation = false
+    private var tracedCluster: Int?
+    private var tracedBelowUnitScale: Bool?
     private let fixtureCount = 10_000
     private var noteURL: URL { directory.appendingPathComponent("Note/drawing.pkdrawing") }
     private var reportURL: URL { directory.appendingPathComponent("Results/report.json") }
@@ -124,9 +130,23 @@ final class DeviceLabController: NSObject, ObservableObject {
     func start(seconds: Double) {
         guard !running, let document, seconds.isFinite, seconds > 0, seconds <= 3_600 else { return }
         do {
+            let identifier = UUID().uuidString
+            runID = identifier
+            let session = directory.appendingPathComponent("Results/Sessions/\(identifier)", isDirectory: true)
+            try FileManager.default.createDirectory(at: session, withIntermediateDirectories: true)
+            journalURL = session.appendingPathComponent("diagnostics.jsonl")
+            journalError = nil; tracedCluster = nil; tracedBelowUnitScale = nil
+            navigation.diagnosticEvent = { [weak self] phase, camera in
+                guard let self, self.tracingNavigation else { return }
+                self.recordDiagnostic(phase, camera: camera)
+            }
+            recordDiagnostic("start.save.begin")
             document.saveNow()
             guard document.saveError == nil else { throw labError(document.saveError!) }
+            recordDiagnostic("start.fingerprint.begin")
             initialFingerprint = try fingerprint()
+            recordDiagnostic("start.fingerprint.end")
+            if let journalError { throw labError(journalError) }
             UIDevice.current.isBatteryMonitoringEnabled = true
             intervals = []; workIntervals = []; appliedNavigationRequests = 0
             batteryLevels = []; unplugged = []; memory = []
@@ -160,8 +180,17 @@ final class DeviceLabController: NSObject, ObservableObject {
             let x = (cluster == 0 ? 0.0 : 100_000) + 450 * (sin(elapsed * 2.5) + 1)
             let y = (cluster == 0 ? 0.0 : -100_000) + 300 * (cos(elapsed * 1.8) + 1)
             let camera = CanvasCamera(origin: CGPoint(x: x, y: y), scale: 1.2 + 0.6 * sin(elapsed * 2))
+            let belowUnitScale = camera.scale < 1
+            // Trace the first camera, distant-region switches and crossings of scale 1.
+            // All other display-link requests still execute the identical workload.
+            tracingNavigation = tracedCluster != cluster || tracedBelowUnitScale != belowUnitScale
+            if tracingNavigation { recordDiagnostic("navigation.begin", camera: camera) }
             navigation.go(to: camera)
             if navigation.projection.camera == camera { appliedNavigationRequests += 1 }
+            if tracingNavigation { recordDiagnostic("navigation.end", camera: camera) }
+            tracingNavigation = false
+            tracedCluster = cluster; tracedBelowUnitScale = belowUnitScale
+            if let journalError { finish(completed: false, reason: journalError); return }
         }
         if elapsed - lastSample >= 1 {
             sample(elapsed: elapsed)
@@ -209,14 +238,35 @@ final class DeviceLabController: NSObject, ObservableObject {
         } catch { status = "기준 저장 실패: \(error.localizedDescription)" }
     }
 
+    func prepareExport() -> Bool {
+        do {
+            guard let reportData,
+                  var report = try JSONSerialization.jsonObject(with: reportData) as? [String: Any] else { return false }
+            if let identifier = report["run_id"] as? String, UUID(uuidString: identifier) != nil {
+                let journal = directory.appendingPathComponent("Results/Sessions/\(identifier)/diagnostics.jsonl")
+                if FileManager.default.fileExists(atPath: journal.path) {
+                    let data = try Data(contentsOf: journal)
+                    guard data.count <= 1_000_000 else { throw labError("Diagnostic export exceeds the 1 MB journal limit") }
+                    report["diagnostic_journal"] = String(decoding: data, as: UTF8.self)
+                }
+            }
+            self.reportData = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            return true
+        } catch { status = "진단 결과 준비 실패: \(error.localizedDescription)"; return false }
+    }
+
     private func finish(completed: Bool, reason: String) {
         displayLink?.invalidate(); displayLink = nil
+        recordDiagnostic("finish.save.begin")
         sample(elapsed: CACurrentMediaTime() - startTime)
         document?.saveNow()
         do {
-            try writeProgress(completed: completed, reason: reason)
-            if completed { try writeCheckpoint() }
-            status = completed ? "자동 시험 완료. Pencil 필기·창 크기 변경·복귀 후 기준 저장과 결과 내보내기를 진행하세요." : "부분 결과 저장: \(reason)"
+            recordDiagnostic("finish.end")
+            let failure = document?.saveError ?? journalError
+            let didComplete = completed && failure == nil
+            try writeProgress(completed: didComplete, reason: failure ?? reason)
+            if didComplete { try writeCheckpoint() }
+            status = didComplete ? "자동 시험 완료. Pencil 필기·창 크기 변경·복귀 후 기준 저장과 결과 내보내기를 진행하세요." : "부분 결과 저장: \(failure ?? reason)"
         } catch { status = "결과 저장 실패: \(error.localizedDescription)" }
         running = false
         UIDevice.current.isBatteryMonitoringEnabled = oldBatteryMonitoring
@@ -263,6 +313,7 @@ final class DeviceLabController: NSObject, ObservableObject {
         }
         var report: [String: Any] = [
             "schema_version": 1, "source_commit": sourceCommit, "fixture_strokes": fixtureCount,
+            "run_id": runID ?? "unstarted",
             "completed": completed, "reason": reason, "duration_seconds": duration,
             "planned_seconds": plannedSeconds,
             "environment": ["is_simulator": simulator, "model": UIDevice.current.model,
@@ -280,6 +331,9 @@ final class DeviceLabController: NSObject, ObservableObject {
                         "drop_estimate_eligible": DeviceLabBattery.canEstimateDrop(levels: batteryLevels, unplugged: unplugged, seconds: duration),
                         "scope": "whole-device coarse battery level, not isolated app power"],
             "samples": memory, "events": events, "verification": verification,
+            "diagnostics": ["journal": journalURL?.lastPathComponent ?? "unavailable",
+                            "write_error": journalError ?? "none",
+                            "scope": "sampled synchronous phase journal overhead is included; last phase narrows a boundary, not a crash cause"],
             "physical_pencil_latency": "not measured by software; operator/high-speed camera required"]
         if let matches = previousCheckpointMatches {
             report["previous_checkpoint"] = ["records_match": matches,
@@ -293,7 +347,33 @@ final class DeviceLabController: NSObject, ObservableObject {
         let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
         try FileManager.default.createDirectory(at: reportURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: reportURL, options: .atomic)
+        if let journalURL {
+            try data.write(to: journalURL.deletingLastPathComponent().appendingPathComponent("report.json"), options: .atomic)
+        }
         reportData = data
+    }
+
+    private func recordDiagnostic(_ phase: String, camera: CanvasCamera? = nil) {
+        guard let journalURL, journalError == nil else { return }
+        var entry: [String: Any] = ["phase": phase, "source_commit": sourceCommit,
+                                    "uptime": ProcessInfo.processInfo.systemUptime,
+                                    "loaded_strokes": document?.loadedStrokeCount ?? 0,
+                                    "applied_navigation_requests": appliedNavigationRequests]
+        if let camera { entry["camera"] = ["x": camera.origin.x, "y": camera.origin.y, "scale": camera.scale] }
+        do {
+            var data = try JSONSerialization.data(withJSONObject: entry, options: [.sortedKeys])
+            data.append(0x0a)
+            if !FileManager.default.fileExists(atPath: journalURL.path) {
+                guard FileManager.default.createFile(atPath: journalURL.path, contents: nil) else {
+                    throw labError("Cannot create persistent diagnostic journal")
+                }
+            }
+            let file = try FileHandle(forWritingTo: journalURL)
+            defer { try? file.close() }
+            try file.seekToEnd()
+            try file.write(contentsOf: data)
+            try file.synchronize()
+        } catch { journalError = "diagnostic journal write failed: \(error.localizedDescription)" }
     }
 
     private func writeCheckpoint() throws {

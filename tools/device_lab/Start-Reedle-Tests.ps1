@@ -1,9 +1,10 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Prepare', 'Collect', 'Import', 'Validate', 'Diagnose')][string]$Mode = 'Prepare',
+    [ValidateSet('Prepare', 'Collect', 'Import', 'Validate', 'Diagnose', 'Analyze-Crash')][string]$Mode = 'Prepare',
     [ValidateRange(10, 3600)][int]$Seconds = 90,
     [string]$Udid,
-    [string]$Report
+    [string]$Report,
+    [string]$BundleId
 )
 $ErrorActionPreference = 'Stop'
 $kitRoot = $PSScriptRoot
@@ -52,6 +53,7 @@ $env:UV_LINK_MODE = 'copy'
 $runnerArgs = @('run', '--project', $kitRoot, '--locked', '--python', '3.12', 'python', (Join-Path $kitRoot 'runner.py'), $Mode.ToLowerInvariant(), '--seconds', "$Seconds")
 if ($Udid) { $runnerArgs += @('--udid', $Udid) }
 if ($Report) { $runnerArgs += @('--report', $Report) }
+if ($BundleId) { $runnerArgs += @('--bundle-id', $BundleId) }
 & $uvPath @runnerArgs
 $resultCode = $LASTEXITCODE
 Write-Host "Results are in: $(Join-Path $kitRoot 'results')"

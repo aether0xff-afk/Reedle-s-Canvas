@@ -32,7 +32,7 @@ def build(output: Path, diagnostics_only: bool = False) -> dict:
 
     if diagnostics_only:
         files = {name: committed('tools/device_lab/' + name) for name in [
-            'runner.py', 'pyproject.toml', 'uv.lock', 'Start-Reedle-Tests.ps1', 'Diagnose-Crash.cmd']}
+            'runner.py', 'crash_analysis.py', 'pyproject.toml', 'uv.lock', 'Start-Reedle-Tests.ps1', 'Diagnose-Crash.cmd']}
         files['START-HERE.md'] = committed('docs/crash-diagnostics.md')
         return write_bundle(output, files, commit, 'existing-crash-diagnostics-only')
 
@@ -57,7 +57,7 @@ def build(output: Path, diagnostics_only: bool = False) -> dict:
     files = {'ReedlesCanvas-DeviceLab.swiftpm.zip': app.getvalue(),
              'START-HERE.md': committed('docs/laptop-device-tests.md'),
              'KIT-VERIFICATION.json': committed('evaluation/results/device-lab-2026-11-22.json')}
-    for name in ['runner.py', 'pyproject.toml', 'uv.lock', 'Start-Reedle-Tests.ps1', 'Run-Tests.cmd',
+    for name in ['runner.py', 'crash_analysis.py', 'pyproject.toml', 'uv.lock', 'Start-Reedle-Tests.ps1', 'Run-Tests.cmd',
                  'Collect-Results.cmd', 'Import-Results.cmd', 'Diagnose-Crash.cmd']:
         files[name] = committed('tools/device_lab/' + name)
     return write_bundle(output, files, commit, 'device-lab')

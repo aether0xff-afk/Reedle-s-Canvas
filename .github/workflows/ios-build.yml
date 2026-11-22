@@ -36,7 +36,7 @@ jobs:
       REEDLE_LIVE_TEST: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[live-baze]') && '1' || '0' }}
       REEDLE_UNIT_ONLY: ${{ contains(github.event.head_commit.message, '[unit-only]') && '1' || '0' }}
       REEDLE_LAYOUT_ONLY: ${{ contains(github.event.head_commit.message, '[layout-only]') && '1' || '0' }}
-      REEDLE_DEVICE_LAB_ONLY: ${{ contains(github.event.head_commit.message, '[device-lab-only]') && '1' || '0' }}
+      REEDLE_DEVICE_LAB_ONLY: ${{ (contains(github.event.head_commit.message, '[device-lab-only]') || contains(github.event.pull_request.title, '[device-lab-only]')) && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -64,7 +64,7 @@ jobs:
               uv run --project server --locked --python 3.12 python tools/run_live_ipad.py test
             fi
           elif [ "$REEDLE_DEVICE_LAB_ONLY" = '1' ]; then
-            python3 tools/test_ipad.py --only-testing ReedlesCanvasTests/DeviceLabTests
+            python3 tools/test_ipad.py --only-testing ReedlesCanvasTests/DeviceLabTests --only-testing ReedlesCanvasTests/CanvasCameraTests
           elif [ "$REEDLE_LAYOUT_ONLY" = '1' ]; then
             python3 tools/test_ipad.py --only-testing ReedlesCanvasUITests/CanvasToolbarUITests
           else
@@ -77,4 +77,14 @@ jobs:
           name: ipad-test-results
           path: .build/ipad-tests/
           if-no-files-found: ignore
+          retention-days: 7
+      - name: Package the exact committed device-lab source
+        if: success() && env.REEDLE_DEVICE_LAB_ONLY == '1'
+        run: python3 tools/package_device_lab.py
+      - name: Keep the versioned device-lab source
+        if: success() && env.REEDLE_DEVICE_LAB_ONLY == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-lab-source
+          path: .build/Reedle-Laptop-DeviceLab.zip
           retention-days: 7

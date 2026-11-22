@@ -9,3 +9,5 @@ DerivedData/
 **/.venv/
 /tools/device_lab/results/
 /tools/device_lab/.uv/
+__pycache__/
+*.pyc
