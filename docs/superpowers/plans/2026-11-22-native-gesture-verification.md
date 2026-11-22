@@ -8,7 +8,9 @@ The app changes only add invisible accessibility identifiers for finding the can
 
 - [x] Audit existing tests and identify the missing real gesture path.
 - [x] Add the native UI case and stable image measurement.
-- [ ] Run the focused UI class on Mac, inspect any failures and actual attachments.
-- [ ] Record the covered scope and retain physical-device gates.
+- [x] Run the focused UI class on Mac, inspect any failures and actual attachments.
+- [x] Record the covered scope and retain physical-device gates.
 
 Apple documents pinch requests as best-effort: https://developer.apple.com/documentation/xcuiautomation/xcuielement/pinch(withscale:velocity:)
+
+The focused UI run 44980930836 passed both toolbar cases. Final full run 44983717524 passed 75 native unit and 5 UI cases and rechecked the gestures against the final ellipse renderer. Baseline, returned and reopened images each measured 1,921 ink pixels in bounds (73,98,443,65); pinch-out measured 947 pixels in (130,135,318,47). Before/zoomed/returned/reopened attachments were inspected. The seven student strokes remained. Physical Pencil latency, actual device FPS/memory/battery and system window management remain unmeasured.

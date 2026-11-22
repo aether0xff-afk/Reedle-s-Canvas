@@ -34,6 +34,8 @@ SQLite v5는 기존 노트를 열어 튜터 판서, 필기 revision, 최근 인�
 
 60개 합성 필기 입력과 자동 채점으로 수학, 루이스 구조, 물리 도식을 비교할 수 있습니다. [평가 데이터와 자동 검증](docs/evaluation.md)
 
+2026년 11월 22일 Mac의 iPad 시뮬레이터 검사 80개와 서버 검사 66개가 통과했습니다. [실제 결과 화면](docs/native-results.md) · [23개 작업의 완료 조건 대조](docs/completion-audit.md) · [판서 표현 비교](docs/tutor-rendering.md). 현재 22/23개 완료이며, AET-49의 실제 기기 지연·프레임·메모리·배터리 계측과 기기 창 관리 확인이 남았습니다.
+
 ## 첫 수직 슬라이스
 
 1. Apple Pencil 획을 월드 좌표의 `userInk`로 저장하고 다시 엽니다.

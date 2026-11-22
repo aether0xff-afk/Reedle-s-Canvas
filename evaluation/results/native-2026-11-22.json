@@ -1,14 +1,14 @@
 {
-  "source_local_commit": "afcd9c847db24977b3c4aaafc2787617a7f1190a",
-  "source_remote_commit": "34a8ebb4c05f9e374191439345a80ed58f4329c7",
-  "source_tree": "bcea66c314a7940d7cf544f834682379ac808bb1",
-  "run_url": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44922395859",
+  "source_local_commit": "1ba7e31e2cbab4042df0eb0babd5e64e3f0f25da",
+  "source_remote_commit": "4925834d0349e0d695adad838e058729ad43c937",
+  "source_tree": "1e893f030232ded237a6f388cf9ccd01e81051f8",
+  "run_url": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44983717524",
   "xcode": "26.6 (17F113)",
   "simulator": "iPad mini (A17 Pro)",
   "tests": {
-    "ipad_unit": 74,
-    "ipad_ui": 3,
-    "server": 65,
+    "ipad_unit": 75,
+    "ipad_ui": 5,
+    "server": 66,
     "evaluation": 19,
     "runner": 4,
     "sealed_bootstrap": 8,
@@ -23,13 +23,15 @@
     "app rotation, background and relaunch",
     "progressive native paths and glyphs with controlled frame time",
     "Pencil resume, reduced motion, hide/show, undo and restoration",
-    "native assistant pen-up scheduling, actual BAZE HTTPS/SSE, automatic overlays without approval, student correction, follow-up and restoration"
+    "native assistant pen-up scheduling, actual BAZE HTTPS/SSE, automatic overlays without approval, student correction, follow-up and restoration",
+    "320/512-point native constrained layout, primary control bounds and 44-point target sizing, resource/practice/tutor menu actions and save",
+    "native pinch scales visible ink; fast pan and saved-camera return/relaunch retain identical observed bounds and 1921 ink pixels"
   ],
   "not_measured": [
-    "physical Apple Pencil latency, device frame rate and battery use",
-    "narrow split-screen toolbar layout (fix awaiting native validation)"
+    "physical Apple Pencil latency, device frame rate, device memory and battery use",
+    "iPadOS physical-device window-management interactions"
   ],
-  "artifacts": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44922395859/artifacts/14715091297",
+  "artifacts": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44983717524/artifacts/14739690132",
   "linear_progress": {
     "completed": 22,
     "total": 23,
@@ -37,34 +39,34 @@
       "AET-49"
     ]
   },
-  "artifact_sha256": "19bc7521de4227a3958212ae1855638e9d121260878cc41f4424273a850e58f0",
-  "artifact_members_scanned_for_provider_key": 1626,
+  "artifact_sha256": "648cc6df9a2a6b09eb695a2456c6e49182dc9adee6aad5812f50b9c9f810da05",
+  "artifact_members_scanned_for_provider_key": 1573,
   "live_observations": {
-    "followUp": "4가 맞아요.",
-    "firstTranscript": "2+2=5",
+    "firstConfidence": 0.99,
     "correctedConfidence": 0.99,
+    "followUp": "4가 맞아요.",
+    "studentStrokesAfterReopen": 7,
+    "firstTranscript": "2+2=5",
     "automaticWithoutApproval": true,
     "correctedTranscript": "2+2=4",
     "hint": [
       {
-        "type": "draw",
         "content": "circle",
-        "targetID": "D06719D3-66EE-48F9-9496-4085A3D1E476"
+        "type": "draw",
+        "targetID": "23C9D740-9BF7-4336-AF36-89E465742C71"
       },
       {
-        "content": "다시 계산해 볼래?",
-        "targetID": "D06719D3-66EE-48F9-9496-4085A3D1E476",
-        "type": "askQuestion"
+        "targetID": "23C9D740-9BF7-4336-AF36-89E465742C71",
+        "type": "askQuestion",
+        "content": "다시 계산해 볼래?"
       }
     ],
-    "studentStrokesAfterReopen": 7,
-    "firstConfidence": 0.99,
     "approval": "automatic",
     "automatic_pen_up_application_verified": true,
-    "test_duration_seconds": 18.289,
+    "test_duration_seconds": 17.281,
     "provider_latency_ms": [
-      6458,
-      4132
+      6146,
+      4667
     ]
   },
   "paging_metrics": [
@@ -72,43 +74,112 @@
       "name": "Memory Physical",
       "unit": "kB",
       "measurements": [
-        770.048,
-        704.576,
-        753.664
+        655.36,
+        688.128,
+        720.896
       ],
-      "mean": 742.7626666666666
+      "mean": 688.128
     },
     {
       "name": "Clock Monotonic Time",
       "unit": "s",
       "measurements": [
-        0.092556229,
-        0.108522449,
-        0.13004826900000002
+        0.059965698000000005,
+        0.051334747,
+        0.051860572
       ],
-      "mean": 0.110375649
+      "mean": 0.05438700566666667
     },
     {
       "name": "CPU Time",
       "unit": "s",
       "measurements": [
-        0.11134160900000001,
-        0.12006333400000001,
-        0.13276989
+        0.071140125,
+        0.058351364,
+        0.06278998300000001
       ],
-      "mean": 0.12139161100000001
+      "mean": 0.06409382400000001
     },
     {
       "name": "Memory Peak Physical",
       "unit": "kB",
       "measurements": [
-        99195.136,
-        99899.712,
-        100669.76
+        104405.376,
+        105027.968,
+        105798.016
       ],
-      "mean": 99921.536
+      "mean": 105077.12
     }
   ],
   "measurement_scope": "iOS Simulator; not physical Pencil, device frame rate or battery",
-  "ephemeral_cleanup_logged": true
+  "ephemeral_cleanup_logged": true,
+  "narrow_layout": {
+    "widths_points": [
+      320,
+      512
+    ],
+    "test_duration_seconds": 60.618,
+    "source": "CanvasToolbarUITests/testNarrowContentKeepsPrimaryControlsInsideAndUsable",
+    "scope": "constrained native app content; not actual system multitasking gestures"
+  },
+  "unique_native_test_cases_covered": 80,
+  "server_default_regression": {
+    "tests_passed": 66,
+    "failures": 0,
+    "command": "uv run --project server --locked pytest -q server/tests --tb=short",
+    "default_base_url": "https://api.baze.co/v1/gateway",
+    "unset_base_url_regression_failed_before_fix": true,
+    "settings_file_sha256": "bac447100e5cea5600a334cea05126ba55b274e68790e83ec34ad62fd896a1fb"
+  },
+  "gesture_verification": {
+    "included_in_full_run": true,
+    "test_duration_seconds": 70.217,
+    "observations": {
+      "swipes": "left/up/right/down at XCTest fast velocity",
+      "pinchScalesRequested": [
+        0.7,
+        2
+      ],
+      "pinchVelocitiesRequested": [
+        -4,
+        4
+      ],
+      "baseline": {
+        "width": 443,
+        "height": 65,
+        "x": 73,
+        "pixels": 1921,
+        "y": 98
+      },
+      "zoomedOut": {
+        "y": 135,
+        "x": 130,
+        "pixels": 947,
+        "width": 318,
+        "height": 47
+      },
+      "scope": "simulator gestures and rendered ink; not physical Pencil latency or device frame rate",
+      "returned": {
+        "x": 73,
+        "width": 443,
+        "y": 98,
+        "height": 65,
+        "pixels": 1921
+      },
+      "reopened": {
+        "pixels": 1921,
+        "x": 73,
+        "y": 98,
+        "width": 443,
+        "height": 65
+      }
+    }
+  },
+  "ellipse_annotation": {
+    "native_ellipse_primitive": true,
+    "whole_anchor_clearance_world_points": 2,
+    "same_target_arrow_route_allowed": true,
+    "core_cases_passed": 14,
+    "student_records_preserved": true
+  }
 }
