@@ -62,6 +62,30 @@ final class DeviceLabTests: XCTestCase {
         XCTAssertFalse(DeviceLabBattery.canEstimateDrop(levels: [0.8, 0.79], unplugged: [true, true], seconds: 90))
     }
 
+    func testBatteryEndpointsAreScalarJSONNumbersIncludingSingleSampleStartup() throws {
+        for levels in [[], [-1.0], [0.22], [0.8, 0.79]] {
+            let endpoints = DeviceLabBattery.endpoints(levels: levels)
+            let data = try DeviceLabJSON.encode(["battery": ["start_level": endpoints.start, "end_level": endpoints.end]])
+            let report = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+            let battery = try XCTUnwrap(report["battery"] as? [String: Any])
+            XCTAssertEqual((battery["start_level"] as? NSNumber)?.doubleValue, levels.isEmpty ? -1 : levels[0])
+            XCTAssertEqual((battery["end_level"] as? NSNumber)?.doubleValue, levels.isEmpty ? -1 : levels[levels.count - 1])
+        }
+    }
+
+    func testTheObservedPredicateSearchFunctionIsRejectedWithoutCallingIt() {
+        let levels = [0.8, 0.79]
+        var called = false
+        let capturedSearch: ((Double) throws -> Bool) throws -> Double? = { predicate in
+            called = true
+            return try levels.last(where: predicate)
+        }
+        XCTAssertThrowsError(try DeviceLabJSON.encode(["battery": ["end_level": capturedSearch]])) { error in
+            XCTAssertTrue(error.localizedDescription.contains("$.battery.end_level"))
+        }
+        XCTAssertFalse(called)
+    }
+
     func testIsolatedNativeWorkloadPersistsAllTenThousandStrokesAndReport() async throws {
         try await verifyWorkload(seconds: 0.5)
     }
@@ -86,6 +110,13 @@ final class DeviceLabTests: XCTestCase {
         host.view.layoutIfNeeded()
         try await Task.sleep(for: .milliseconds(200))
         controller.start(seconds: seconds)
+        let initialReport = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(controller.reportData)) as? [String: Any])
+        let initialBattery = try XCTUnwrap(initialReport["battery"] as? [String: Any])
+        let initialSamples = try XCTUnwrap(initialReport["samples"] as? [[String: Any]])
+        XCTAssertEqual(initialSamples.count, 1)
+        let initialLevel = try XCTUnwrap(initialSamples[0]["battery_level"] as? NSNumber).doubleValue
+        XCTAssertEqual((initialBattery["start_level"] as? NSNumber)?.doubleValue, initialLevel)
+        XCTAssertEqual((initialBattery["end_level"] as? NSNumber)?.doubleValue, initialLevel)
         let deadline = Date().addingTimeInterval(seconds + 30)
         while controller.running && Date() < deadline { try await Task.sleep(for: .milliseconds(20)) }
         XCTAssertFalse(controller.running)

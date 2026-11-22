@@ -301,6 +301,11 @@ final class DeviceLabController: NSObject, ObservableObject {
         let duration = max(0, CACurrentMediaTime() - startTime)
         let stats = DeviceLabFrameStats(intervals: intervals)
         let workStats = DeviceLabFrameStats(intervals: workIntervals)
+        // In the Playgrounds preview, untyped `last` resolved to last(where:)'s function value.
+        // Extract scalar endpoints by index before inserting them into an Any dictionary.
+        let batteryEndpoints = DeviceLabBattery.endpoints(levels: batteryLevels)
+        let batteryStartLevel: Double = batteryEndpoints.start
+        let batteryEndLevel: Double = batteryEndpoints.end
         #if targetEnvironment(simulator)
         let simulator = true
         #else
@@ -328,7 +333,7 @@ final class DeviceLabController: NSObject, ObservableObject {
                                 "p95_ms": workStats.p95Milliseconds, "max_ms": workStats.maximumMilliseconds],
             "applied_navigation_requests": appliedNavigationRequests,
             "peak_footprint_bytes": memory.compactMap { $0["physical_footprint_bytes"] as? UInt64 }.max() ?? 0,
-            "battery": ["start_level": batteryLevels.first ?? -1, "end_level": batteryLevels.last ?? -1,
+            "battery": ["start_level": batteryStartLevel, "end_level": batteryEndLevel,
                         "all_samples_unplugged": !unplugged.isEmpty && unplugged.allSatisfy { $0 },
                         "drop_estimate_eligible": DeviceLabBattery.canEstimateDrop(levels: batteryLevels, unplugged: unplugged, seconds: duration),
                         "scope": "whole-device coarse battery level, not isolated app power"],

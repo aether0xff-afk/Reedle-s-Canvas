@@ -1,7 +1,8 @@
 # Physical Device Lab JSON writer crash
 
-Status: **failing boundary established from a physical stack; corrective patch and
-physical revalidation are separate. AET-49 remains In Progress, 22/23 complete.**
+Status: **physical stack and a subsequent protected failure identify the invalid
+battery report value. Scalar extraction is corrected; physical revalidation is
+pending. AET-49 remains In Progress, 22/23 complete.**
 
 ## Device evidence
 
@@ -49,10 +50,23 @@ an Objective-C exception rather than a catchable Swift `Error`, so surrounding
 for checking input validity before that API:
 [JSONSerialization writer](https://developer.apple.com/documentation/foundation/jsonserialization/data(withjsonobject:options:)).
 
-The stack establishes JSON-writing failure but **does not identify the particular
-invalid field, object type, or value**. There is no exception-reason string naming
-that field in the supplied report. Non-finite numbers and unsupported boxed
-values are regression inputs, not asserted facts about the user's measurement.
+The IPS alone did not identify the particular invalid field. The user then ran
+the protected build `c1b434637811` on the physical iPad and supplied its 20:56 KST
+screen. The app stayed open with 10,000 fixture strokes, but the test did not start:
+
+```text
+Invalid diagnostic JSON at $.battery.end_level:
+((Swift.Double) throws -> Swift.Bool) throws -> Swift.Optional<Swift.Double>
+```
+
+This identifies a predicate-search **function value**, not a battery number, at
+the exact report path. Its signature matches `last(where:)`; the corresponding
+source expression was `batteryLevels.last ?? -1` in an Any-typed report literal.
+Normal Xcode simulator runs did not expose this Playgrounds execution behavior.
+The exact compiler/preview-rewriter mechanism is not asserted. NaN and Date remain
+defensive regression inputs, not observed sensor values. The screenshot proves
+that the protective writer prevented this abort; it does not prove workload
+completion or battery-measurement success.
 
 ## Corrective change
 
@@ -75,6 +89,15 @@ No student-note, AI-layer, camera, fixture-count or workload-duration behavior i
 changed. The full 10,000 strokes and original 90/600-second camera workload remain.
 The collector now retains `lastExceptionBacktrace` in addition to the abort thread
 and understands IPS `modelCode` metadata.
+
+The follow-up correction reads battery endpoints through integer subscripts,
+returns an explicitly Double-typed pair, and stores explicitly typed Double locals
+in the JSON report. It removes the same first/last property lookups from battery
+eligibility and frame maximum calculations. Empty levels keep the existing -1
+unknown sentinel; no reported battery level is invented or replaced by zero.
+Regressions cover zero/one/multiple samples, reject the exact observed function
+signature without invoking it, and inspect the initial one-sample report before
+both short and full workload execution. The 10,000-stroke workload is unchanged.
 
 ## Verification scope
 
@@ -99,6 +122,10 @@ displays the first 12 commit characters so the operator can verify the installed
 source before testing. The user chose to handle source insertion; no source
 transfer or device build/run is claimed. Raw device logs are excluded from this
 package.
+
+The c1b4346 simulator pass above applies to the protective writer only; its physical
+startup failed as documented above. The follow-up scalar-extraction patch requires
+its own build/tests and a new physical run.
 
 Physical acceptance still requires running the corrected source on the same iPad:
 first confirm that the initial report succeeds, then complete the full workload
