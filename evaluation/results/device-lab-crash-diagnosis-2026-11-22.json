@@ -1,0 +1,36 @@
+{
+  "source_local_commit": "061df06d5553928376e373491dbba4c5eb97c119",
+  "source_remote_commit": "f67f2661167a0f79949a1bf0f62fc84dfc4cad41",
+  "source_tree": "f78c61dc7934f7e6da8e820ac3e624089b2ba67c",
+  "run_url": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/44997226681",
+  "tests": {
+    "native_device_lab": 4,
+    "collector": 16,
+    "ipad_runner": 4,
+    "server": 66,
+    "evaluation": 19,
+    "sealed_bootstrap": 8,
+    "failures": 0,
+    "native_skipped": 0
+  },
+  "full_workload": {
+    "is_simulator": true,
+    "os_version": "26.5",
+    "duration_seconds": 90.0138158333333,
+    "applied_navigation_requests": 4017,
+    "peak_footprint_bytes": 123460096,
+    "reopened_stroke_count": 10000,
+    "stroke_records_equal": true
+  },
+  "artifact_sha256": "4ddafe166462630fe20edbf77b61588cf52471e5b2e86220edbcea23f0a322c1",
+  "artifact_zip_members_scanned": 55,
+  "provider_key_absent": true,
+  "diagnostic_zip_sha256": "0caa8b0ba6aa5993ec9f8ee4b8a61d644073688c1d4628dfb4a4351ad8a29d1c",
+  "diagnostic_scope": "Existing related device crash reports only; no workload launched, no device records erased",
+  "physical_crash_reproduced": false,
+  "physical_crash_fixed": false,
+  "app_behavior_changed": false,
+  "next_evidence_required": "Physical device backtrace or termination/Jetsam report",
+  "linear_completed": 22,
+  "linear_total": 23
+}
