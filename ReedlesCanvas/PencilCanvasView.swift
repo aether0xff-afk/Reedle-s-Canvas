@@ -26,6 +26,7 @@ struct PencilCanvasView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> PKCanvasView {
         let canvas = WorldCanvasView()
+        canvas.accessibilityIdentifier = "canvas.ink"
         canvas.delegate = context.coordinator
         canvas.drawingPolicy = .pencilOnly
         canvas.tool = PKInkingTool(.pen, color: .black, width: 3)

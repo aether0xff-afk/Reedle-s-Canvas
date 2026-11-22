@@ -42,6 +42,7 @@ struct CanvasToolbar: View {
                 } label: {
                     CanvasMenuLabel(title: "보기", systemImage: "eye", compact: compact)
                 }
+                .accessibilityIdentifier(inTutorExample ? "tutor.exampleViewMenu" : "canvas.viewMenu")
                 .disabled(document.loadError != nil || navigation.isUsingPencil)
                 if !inTutorExample {
                     NoteResourceControls(document: document, navigation: navigation, library: library, compact: compact)
