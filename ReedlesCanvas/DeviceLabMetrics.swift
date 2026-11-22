@@ -26,9 +26,9 @@ enum DeviceLabBattery {
     }
 
     static func canEstimateDrop(levels: [Double], unplugged: [Bool], seconds: Double) -> Bool {
-        guard seconds.isFinite && seconds >= 600 && levels.count >= 2 && levels.count == unplugged.count
-            && unplugged.allSatisfy { $0 } && levels.allSatisfy { $0.isFinite && (0...1).contains($0) }
-        else { return false }
-        return levels[levels.count - 1] <= levels[0]
+        guard seconds.isFinite, seconds >= 600, levels.count >= 2, levels.count == unplugged.count else { return false }
+        return unplugged.allSatisfy({ $0 })
+            && levels.allSatisfy({ $0.isFinite && (0...1).contains($0) })
+            && levels[levels.count - 1] <= levels[0]
     }
 }
