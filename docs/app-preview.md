@@ -20,4 +20,6 @@ Windows 서버는 저장소 루트의 `Start-Reedle-Server.cmd`로 실행할 수
 
 앞서 보고된 실기기 자동 부하 크래시는 원인이 확정되지 않았고 해결된 것으로 표시하지 않는다. AET-49는 검증 보류 상태이며 원래 작업 기준 진행률은 22/23개다. 새 화면과 배포본 개발은 이 검증을 기다리지 않고 진행한다.
 
-최종 [미리보기 실행 45112803317](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/45112803317)은 일반 앱 빌드와 밝은/어두운 모드의 실행 화면 캡처를 완료했다. 테스트 실행은 0회다. 앱 소스 ZIP은 32개 파일, SHA-256 `33bcfa9318796e393dbada2291bc8f5649ddc3a1c1dfacf2329a76bba2b632bd`이며 빌드된 커밋의 정규화된 소스 바이트와 같다. [빌드·전달 기록](../evaluation/results/app-preview-2026-11-23.json)
+기존 화면 [미리보기 실행 45112803317](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/45112803317)은 일반 앱 빌드와 밝은/어두운 모드의 실행 화면 캡처를 완료했다. 테스트 실행은 0회다. 당시 앱 소스 ZIP은 32개 파일, SHA-256 `33bcfa9318796e393dbada2291bc8f5649ddc3a1c1dfacf2329a76bba2b632bd`였다. 이 화면은 이후 추가한 연결 파일 화면을 보여주지 않는다. [당시 빌드·전달 기록](../evaluation/results/app-preview-2026-11-23.json)
+
+최신 연결 파일 변경은 [컴파일 실행 45114890853](https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/45114890853)에서 빌드에 성공했다. 앱 실행·화면 캡처·회귀 시험·BAZE 호출은 하지 않았다. 최신 앱 소스 ZIP은 33개 파일, SHA-256 `b2b407306e6988addc9bdc1660845233c87359c6c4292b662a1065dff24855aa`이며 컴파일된 소스와 바이트가 일치한다. [최신 빌드·전달 기록](../evaluation/results/tutor-connection-2026-11-23.json)
