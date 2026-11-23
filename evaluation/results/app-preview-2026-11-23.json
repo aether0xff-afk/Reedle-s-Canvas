@@ -1,0 +1,29 @@
+{
+  "source_local_commit": "7805ec2de652a7b1cc95bd8ccb42ff8c23b1a4b7",
+  "source_remote_commit": "e3446b9963ac1dde55d611620988eee6b9ee9616",
+  "source_tree": "23b2e084617a40ce25424640da1974fffa449849",
+  "run_url": "https://github.com/aether0xff-afk/Reedle-s-Canvas/actions/runs/45112803317",
+  "build_succeeded": true,
+  "tests_executed": false,
+  "physical_test_requests": false,
+  "provider_calls": 0,
+  "device": "iPad mini (A17 Pro)",
+  "os_version": "26.5",
+  "screenshots_inspected": [
+    "light",
+    "dark"
+  ],
+  "source_package_sha256": "33bcfa9318796e393dbada2291bc8f5649ddc3a1c1dfacf2329a76bba2b632bd",
+  "source_package_files": 32,
+  "source_bytes_match": true,
+  "device_lab_included": false,
+  "artifact_sha256": "78d3c2e380feafebf7c192eb0eaa0c13f800e7e844111bdab5baa5e791b87c06",
+  "provider_key_absent": true,
+  "server_launcher_scope": "PowerShell syntax parsed; server not publicly deployed or exercised",
+  "known_unresolved": "Physical device-lab automatic workload crash; verification deferred by user on 2026-11-23",
+  "linear_progress": {
+    "done": 22,
+    "deferred": 1,
+    "total": 23
+  }
+}

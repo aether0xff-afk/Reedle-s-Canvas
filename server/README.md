@@ -4,6 +4,15 @@ iPad의 관찰 요청을 받아 BAZE로 현재 필기 영역을 읽고, 검증�
 
 ## 실행과 검증
 
+Windows에서는 저장소 루트의 `Start-Reedle-Server.cmd`로 서버를 실행할 수 있습니다. 이 개발 계정에 이미 저장한 암호화 자격증명 로더가 있으면 읽고, 다른 서버 계정에서는 아래 환경 변수를 먼저 설정합니다. BAZE 키나 앱 토큰을 실행 인자·소스에 넣지 않습니다. 기본 주소는 HTTPS 프록시 뒤에서 사용하는 `127.0.0.1:8000`입니다.
+
+```powershell
+./Start-Reedle-Server.cmd
+./Start-Reedle-Server.cmd -ListenAddress 0.0.0.0 -Port 8443 -Certificate C:/certs/fullchain.pem -CertificateKey C:/certs/key.pem
+```
+
+외부 인터페이스에 직접 연결하려면 인증서와 키를 함께 지정합니다. iPad에는 해당 인증서를 신뢰할 수 있는 HTTPS 주소와 별도의 서버 접속 토큰을 설정합니다. 기본 사용량 카운터는 Windows 사용자 프로필의 `ReedlesCanvas/server`에 보관해 소스 업데이트 후에도 유지합니다. 이번 사용자 지시에 따른 화면 작업에서는 이 서버를 공개 배포하거나 회귀 테스트를 실행하지 않았습니다.
+
 Python 3.11 이상과 `uv`가 필요합니다. 아래 명령은 저장소 루트에서 실행합니다.
 
 ```sh
