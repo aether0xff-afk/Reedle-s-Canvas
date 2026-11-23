@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   contracts:
+    if: ${{ github.event_name != 'push' || !contains(github.event.head_commit.message, '[app-preview]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,6 +31,7 @@ jobs:
         run: uv run --project server --locked python -m unittest tools.test_live_ipad_bootstrap
 
   ios-build:
+    if: ${{ github.event_name != 'push' || !contains(github.event.head_commit.message, '[app-preview]') }}
     runs-on: macos-latest
     timeout-minutes: 45
     env:

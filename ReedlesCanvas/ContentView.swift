@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var backup: NoteBackup?
     @State private var showingExporter = false
     @State private var backupError: String?
+    @State private var containsPDF = false
     private let inTutorExample: Bool
     private let openTutorExample: (() -> Void)?
 
@@ -36,6 +37,13 @@ struct ContentView: View {
                               tutorPanel: $tutorPanel, width: geometry.size.width, inTutorExample: inTutorExample,
                               openTutorExample: openTutorExample, exportBackup: prepareBackup)
 
+                if !inTutorExample {
+                    CanvasTutorStatus(assistant: assistant, document: document,
+                                      pencilInUse: navigation.isUsingPencil,
+                                      openSettings: { tutorPanel = .connection },
+                                      showProposal: { tutorPanel = .proposal($0) })
+                }
+
                 if let loadError = document.loadError {
                     ContentUnavailableView(
                         "필기를 열 수 없습니다",
@@ -53,9 +61,15 @@ struct ContentView: View {
                         PencilCanvasView(document: document, navigation: navigation)
                         TutorInkCanvas(document: document, projection: navigation.projection,
                                        pencilInUse: navigation.isUsingPencil, reduceMotion: reduceMotion)
+                        if showsWelcome {
+                            CanvasWelcomeView()
+                                .transition(.opacity)
+                                .allowsHitTesting(false)
+                        }
                         tutorNotice
                     }
                     .clipped()
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: showsWelcome)
                 }
             }
         }
@@ -89,6 +103,17 @@ struct ContentView: View {
                 document.saveNow()
             }
         }
+        .task { refreshResourcePresence() }
+        .onChange(of: pdfLibrary.revision) { _, _ in refreshResourcePresence() }
+    }
+
+    private var showsWelcome: Bool {
+        !inTutorExample && document.strokeCount == 0 && document.tutorMarks.isEmpty
+            && document.practice.current == nil && !containsPDF && !navigation.isUsingPencil
+    }
+
+    private func refreshResourcePresence() {
+        containsPDF = !((try? document.store?.pdfMaterials()) ?? []).isEmpty
     }
 
     @ViewBuilder
