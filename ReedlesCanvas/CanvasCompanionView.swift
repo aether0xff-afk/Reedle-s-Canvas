@@ -11,21 +11,20 @@ struct CanvasWelcomeView: View {
                 .background(Color.accentColor.opacity(0.07), in: Circle())
             Text("생각이 시작되는 곳")
                 .font(.system(.title2, design: .rounded, weight: .semibold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(Color(white: 0.12))
             VStack(spacing: 8) {
                 Text("Apple Pencil로 첫 줄을 써 보세요.")
                 Text("손가락으로 이동하고, 두 손가락으로 확대해요.")
                     .font(.callout)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Color(white: 0.43))
             }
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color(white: 0.40))
             .multilineTextAlignment(.center)
         }
         .padding(28)
         .frame(maxWidth: 430)
         .allowsHitTesting(false)
         .accessibilityElement(children: .combine)
-        .environment(\.colorScheme, .light)
     }
 }
 

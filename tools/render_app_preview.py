@@ -50,7 +50,8 @@ def main():
     screenshot = OUT / 'normal-app.png'
     run(['xcrun', 'simctl', 'io', udid, 'screenshot', str(screenshot)])
     run(['xcrun', 'simctl', 'ui', udid, 'appearance', 'dark'])
-    time.sleep(1)
+    run(['xcrun', 'simctl', 'launch', '--terminate-running-process', udid, 'dev.aether.reedlescanvas'])
+    time.sleep(4)
     run(['xcrun', 'simctl', 'io', udid, 'screenshot', str(OUT / 'normal-app-dark.png')])
     # Derived build products are not a signed physical-device IPA and are not the deliverable.
     metadata = {'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
