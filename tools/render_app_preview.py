@@ -49,11 +49,15 @@ def main():
     time.sleep(4)
     screenshot = OUT / 'normal-app.png'
     run(['xcrun', 'simctl', 'io', udid, 'screenshot', str(screenshot)])
+    run(['xcrun', 'simctl', 'ui', udid, 'appearance', 'dark'])
+    time.sleep(1)
+    run(['xcrun', 'simctl', 'io', udid, 'screenshot', str(OUT / 'normal-app-dark.png')])
     # Derived build products are not a signed physical-device IPA and are not the deliverable.
     metadata = {'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                 'created_utc': datetime.now(timezone.utc).isoformat(), 'device': name,
                 'os_version': '.'.join(map(str, version)), 'build_succeeded': True,
-                'tests_executed': False, 'provider_calls': 0, 'screenshot': screenshot.name}
+                'tests_executed': False, 'provider_calls': 0, 'screenshot': screenshot.name,
+                'dark_screenshot': 'normal-app-dark.png'}
     (OUT / 'preview.json').write_text(json.dumps(metadata, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(metadata), flush=True)
 

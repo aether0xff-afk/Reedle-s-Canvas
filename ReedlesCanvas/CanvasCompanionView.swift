@@ -25,6 +25,7 @@ struct CanvasWelcomeView: View {
         .frame(maxWidth: 430)
         .allowsHitTesting(false)
         .accessibilityElement(children: .combine)
+        .environment(\.colorScheme, .light)
     }
 }
 
