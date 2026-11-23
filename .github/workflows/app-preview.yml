@@ -13,6 +13,8 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[app-preview]') }}
     runs-on: macos-latest
     timeout-minutes: 25
+    env:
+      COMPILE_ONLY: ${{ contains(github.event.head_commit.message, '[compile-only]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,9 +23,19 @@ jobs:
       - name: Install project generator
         run: brew install xcodegen
       - name: Package the normal iPad source
-        run: python3 tools/package_app_preview.py
-      - name: Build and render the app without running tests
-        run: python3 tools/render_app_preview.py
+        run: |
+          if [ "$COMPILE_ONLY" = "true" ]; then
+            python3 tools/package_app_preview.py --compile-only
+          else
+            python3 tools/package_app_preview.py
+          fi
+      - name: Build the app without running tests
+        run: |
+          if [ "$COMPILE_ONLY" = "true" ]; then
+            python3 tools/render_app_preview.py --compile-only
+          else
+            python3 tools/render_app_preview.py
+          fi
       - name: Keep app source, screenshot and build log
         if: always()
         uses: actions/upload-artifact@v4

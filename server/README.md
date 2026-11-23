@@ -24,6 +24,8 @@ uv run --directory server --locked --no-dev uvicorn reedle_server.app:app --host
 
 로컬 예시는 루프백 HTTP에서 실행합니다. iPad에서 연결할 때는 Uvicorn 앞에 HTTPS 서버를 두고 해당 HTTPS 주소를 앱에 입력합니다.
 
+서버 주소와 앱 토큰의 수동 복사를 줄이려면 저장소 루트에서 `Export-Reedle-Connection.cmd -Server 'https://your-tutor.example'`로 연결 파일을 내보낼 수 있습니다. 실제 서버 주소로 바꿔 사용합니다. 파일은 저장소 밖에 현재 계정 전용 권한으로 생성되며 BAZE 키는 포함하지 않습니다. [연결 파일 가져오기와 HTTPS 배포 준비](../docs/tutor-connection-file.md)
+
 | 환경 변수 | 값 |
 | --- | --- |
 | `REEDLE_CLIENT_TOKEN` | 필수. 앱과 서버에서 공유하는 별도 토큰 |

@@ -9,7 +9,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def build(output: Path) -> dict:
+def build(output: Path, compile_only: bool = False) -> dict:
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     if subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT):
         raise ValueError('Commit tracked changes before packaging a versioned app.')
@@ -28,7 +28,8 @@ def build(output: Path) -> dict:
     manifest = {'source_commit': commit, 'package': output.name,
                 'sha256': hashlib.sha256(output.read_bytes()).hexdigest(),
                 'entry_point': 'ReedlesCanvasApp', 'device_lab_included': False,
-                'checks_for_this_update': 'Build and normal-app screenshot only; tests deferred by user',
+                'checks_for_this_update': ('Compile only; app not launched; tests deferred by user' if compile_only
+                                           else 'Build and normal-app screenshot only; tests deferred by user'),
                 'known_unresolved': ['Device-lab automatic workload crash reported on physical iPad; cause unconfirmed'],
                 'files': [{'path': n, 'bytes': len(v), 'sha256': hashlib.sha256(v).hexdigest()} for n, v in files.items()]}
     path = output.with_name('ReedlesCanvas-App-manifest.json')
@@ -39,4 +40,6 @@ def build(output: Path) -> dict:
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output', type=Path, default=ROOT / '.build/ReedlesCanvas-App.swiftpm.zip')
-    print(json.dumps(build(p.parse_args().output), indent=2))
+    p.add_argument('--compile-only', action='store_true')
+    args = p.parse_args()
+    print(json.dumps(build(args.output, args.compile_only), indent=2))

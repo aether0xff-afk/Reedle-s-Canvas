@@ -1,5 +1,6 @@
 import PencilKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 @MainActor
 struct TutorControls: View {
@@ -270,16 +271,31 @@ private struct TutorConnectionEditor: View {
     @State private var invalid = false
     @State private var letterSize = TutorLetterSize.saved
     @State private var inkColor = TutorInkColor.saved
+    @State private var importingConnection = false
+    @State private var readingConnection = false
+    @State private var importMessage: String?
+    @State private var importFailed = false
     let save: (TutorConnection) throws -> Void
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("연결") {
+                    Button {
+                        importingConnection = true
+                    } label: {
+                        Label("연결 파일에서 불러오기", systemImage: "doc.badge.arrow.up")
+                    }
+                    .disabled(readingConnection)
                     TextField("튜터 서버 HTTPS 주소", text: $connection.server)
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                    if readingConnection { ProgressView("연결 파일을 읽고 있어요") }
+                    if let importMessage {
+                        Text(importMessage).font(.caption)
+                            .foregroundStyle(importFailed ? Color.red : Color.secondary)
+                    }
                     SecureField("튜터 서버 접속 토큰", text: $connection.token)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -319,7 +335,32 @@ private struct TutorConnectionEditor: View {
             .navigationTitle("튜터 연결")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("저장", action: saveConnection) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("저장", action: saveConnection).disabled(readingConnection)
+                }
+            }
+            .fileImporter(isPresented: $importingConnection, allowedContentTypes: [.json],
+                          onCompletion: importConnection)
+        }
+    }
+
+    private func importConnection(_ result: Result<URL, Error>) {
+        guard case let .success(url) = result else { return }
+        readingConnection = true
+        Task {
+            defer { readingConnection = false }
+            do {
+                let profile = try await Task.detached(priority: .userInitiated) {
+                    try TutorConnectionProfile.read(from: url)
+                }.value
+                connection = profile.applying(to: connection)
+                invalid = false
+                importFailed = false
+                importMessage = "연결 정보를 불러왔습니다. 서버 주소를 확인하고 서비스 사용을 선택한 뒤 저장해 주세요."
+            } catch {
+                importFailed = true
+                importMessage = (error as? TutorConnectionProfileError)?.errorDescription
+                    ?? "연결 파일을 읽지 못했습니다. 서버에서 내보낸 JSON 파일인지 확인해 주세요."
             }
         }
     }

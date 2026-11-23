@@ -1,0 +1,6 @@
+{
+  "format": "reedle.tutor.connection",
+  "version": 1,
+  "server": "https://your-tutor-server.example",
+  "access_token": "REPLACE_WITH_THE_SEPARATE_APP_ACCESS_TOKEN"
+}
