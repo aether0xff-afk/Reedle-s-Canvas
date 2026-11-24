@@ -6,6 +6,8 @@ iPadOS에서 학생과 AI가 같은 캔버스에 필기하는 학습 도구입�
 
 Windows 튜터 서버는 저장소 루트의 `Start-Reedle-Server.cmd`로 실행합니다. 저장된 서버 계정 설정을 읽고, 외부 직접 연결에는 TLS 인증서를 요구합니다. [서버 실행 옵션](server/README.md)
 
+실제 iPad용 Release/arm64 바이너리는 [기기 빌드 안내](docs/ipad-build.md)에 따라 미서명 IPA로 생성할 수 있습니다. 기기 설치에는 별도 Apple 서명이 필요하며, 테스트는 실행하지 않습니다.
+
 서버 주소와 앱 접속 토큰은 [연결 파일](docs/tutor-connection-file.md)로 가져올 수 있습니다. 서버에서 `Export-Reedle-Connection.cmd -Server 'https://실제서버주소'`로 비공개 파일을 내보내고 앱의 튜터 연결 설정에서 선택합니다. 실제 HTTPS 서버 주소는 별도로 필요합니다. 이 추가 변경은 앱 실행·회귀 시험 없이 컴파일만 확인합니다.
 
 ## 캔버스와 저장

@@ -14,7 +14,8 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 25
     env:
-      COMPILE_ONLY: ${{ contains(github.event.head_commit.message, '[compile-only]') }}
+      COMPILE_ONLY: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[compile-only]') }}
+      DEVICE_BUILD: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[device-build]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,7 +37,10 @@ jobs:
           else
             python3 tools/render_app_preview.py
           fi
-      - name: Keep app source, screenshot and build log
+      - name: Build the unsigned iPad device IPA
+        if: env.DEVICE_BUILD == 'true'
+        run: python3 tools/build_ipad_artifact.py
+      - name: Keep app source and build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -45,4 +49,5 @@ jobs:
             .build/app-preview/
             .build/ReedlesCanvas-App.swiftpm.zip
             .build/ReedlesCanvas-App-manifest.json
+            .build/ipad-build/
           retention-days: 7
